@@ -1,118 +1,108 @@
-import * as React from 'react';
+import * as React from "react"
 import { NavigationContainer } from '@react-navigation/native';
 import {
   createDrawerNavigator,
   DrawerContentScrollView,
 } from '@react-navigation/drawer';
-import { Ionicons } from '@expo/vector-icons';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import {
-  NativeBaseProvider,
-  Button,
   Box,
-  HamburgerIcon,
-  Pressable,
+  Text,
   Heading,
   VStack,
-  Text,
-  Center,
+  FormControl,
+  Input,
+  Link,
+  Button,
   HStack,
-  Divider,
-  Icon,
-} from 'native-base';
-const Drawer = createDrawerNavigator();
-function Component(props) {
-  return (
-      <Center>
-       <Text mt="12" fontSize="18">Hello World!</Text>
-     </Center>
-  );
-}
+  Center,
+  NativeBaseProvider,
+} from "native-base"
+import HomeScreen from './screens/index';
+import PouchDB from 'pouchdb-react-native'
 
-const getIcon = (screenName) => {
-  switch (screenName) {
-    case 'Home':
-      return 'home-outline';
-    case 'Insulin':
-      return 'pencil-outline';
-    case 'Dexcom':
-      return 'stats-chart-outline';
-    case 'Recipes':
-      return 'bookmarks-outline';
-    case 'Settings':
-      return 'settings-outline';
-    default:
-      return undefined;
-  }
-};
+const db = new PouchDB('settings')
 
-function CustomDrawerContent(props) {
+
+const Stack = createNativeStackNavigator();
+
+
+
+const Login = ({ navigation }) => {
+  db.get("login").then(function(value) { 
+    if (!value) {
+      return
+    }
+    else {
+      navigation.navigate('Home')
+    }
+  })
   return (
-    <DrawerContentScrollView {...props} safeArea>
-      <VStack space="6" my="2" mx="1">
-        <Box px="4">
-          <Text bold color="gray.700">
-            Diabetic Manager
-          </Text>
-        </Box>
-        <VStack divider={<Divider />} space="4">
-          <VStack space="3">
-            {props.state.routeNames.map((name, index) => (
-              <Pressable
-                px="5"
-                py="3"
-                rounded="md"
-                bg={
-                  index === props.state.index
-                    ? 'rgba(6, 182, 212, 0.1)'
-                    : 'transparent'
-                }
-                onPress={(event) => {
-                  props.navigation.navigate(name);
-                }}>
-                <HStack space="7" alignItems="center">
-                  <Icon 
-                    color={
-                      index === props.state.index ? 'primary.500' : 'gray.500'
-                    }
-                    size="5"
-                    as={<Ionicons name={getIcon(name)} />}
-                  />
-                  <Text
-                    fontWeight="500"
-                    color={
-                      index === props.state.index ? 'primary.500' : 'gray.700'
-                    }>
-                    {name}
-                  </Text>
-                </HStack>
-              </Pressable>
-            ))}
-          </VStack>
-        </VStack>
+    <Center flex={1} px="3">
+    <Box safeArea p="2" py="8" w="90%" maxW="290">
+      <Heading
+        size="lg"
+        fontWeight="600"
+        color="coolGray.800"
+        _dark={{
+          color: "warmGray.50",
+        }}
+      >
+        Welcome
+      </Heading>
+      <Heading
+        mt="1"
+        _dark={{
+          color: "warmGray.200",
+        }}
+        color="coolGray.600"
+        fontWeight="medium"
+        size="xs"
+      >
+        Sign in using your Dexcom credentials
+      </Heading>
+
+      <VStack space={3} mt="5">
+        <FormControl>
+          <FormControl.Label>Username</FormControl.Label>
+          <Input getRef={input => {this.username = input;}} />
+        </FormControl>
+        <FormControl>
+          <FormControl.Label>Password</FormControl.Label>
+          <Input type="password" getRef={input => {this.password = input;}} />
+        </FormControl>
+
+        <Button mt="2" colorScheme="indigo" onPress={() => {
+          db.put({
+            "login": {
+              "username": this.refs.username.value,
+              "password": this.refs.password.value
+            }
+          });
+          navigation.navigate('Home')}}>
+          Sign in
+        </Button>
       </VStack>
-    </DrawerContentScrollView>
-  );
-}
-function MyDrawer() {
-  return (
-    <Box safeArea flex={1}>
-      <Drawer.Navigator
-        drawerContent={(props) => <CustomDrawerContent {...props} />}>
-        <Drawer.Screen name="Home" component={Component} />
-        <Drawer.Screen name="Insulin" component={Component} />
-        <Drawer.Screen name="Dexcom" component={Component} />
-        <Drawer.Screen name="Recipes" component={Component} />
-        <Drawer.Screen name="Settings" component={Component} />
-      </Drawer.Navigator>
     </Box>
-  );
+    </Center>
+  )
 }
-export default function App() {
+
+export default () => {
   return (
     <NavigationContainer>
       <NativeBaseProvider>
-        <MyDrawer />
+        <Stack.Navigator
+        screenOptions={{
+          headerShown: false
+        }}>
+            <Stack.Screen
+              name="Login"
+              component={Login}
+            />
+          <Stack.Screen name="Home" component={HomeScreen} />
+        </Stack.Navigator>
       </NativeBaseProvider>
     </NavigationContainer>
-  );
+  )
 }
