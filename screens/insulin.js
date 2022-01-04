@@ -7,7 +7,7 @@ import {
 export default function App() {
   return (
     <Center>
-    <Text mt="12" fontSize="18">Insulin Screen</Text>
+    <Text mt="12" fontSize="18">Hi :D</Text>
   </Center>
   );
 }
