@@ -33,7 +33,6 @@ const Stack = createNativeStackNavigator();
 
 const Login = ({ navigation }) => {
   db.get("login").then(function(value) { 
-    console.log(value)
     if (!value) {
       return
     }

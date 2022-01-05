@@ -21,6 +21,7 @@ import {
 } from 'native-base';
 
 import InsulinScreen from '../screens/insulin';
+import SettingsScreen from '../screens/settings';
 
 
 const Drawer = createDrawerNavigator();
@@ -100,7 +101,7 @@ function MyDrawer() {
         <Drawer.Screen name="Insulin" component={InsulinScreen} />
         <Drawer.Screen name="Dexcom" component={InsulinScreen} />
         <Drawer.Screen name="Recipes" component={InsulinScreen} />
-        <Drawer.Screen name="Settings" component={InsulinScreen} />
+        <Drawer.Screen name="Settings" component={SettingsScreen} />
       </Drawer.Navigator>
     </Box>
   );
