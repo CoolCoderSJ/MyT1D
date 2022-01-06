@@ -6,12 +6,9 @@ import {
   Heading,
   VStack,
   FormControl,
-  Input,
-  Link,
   Button,
   HStack,
   Center,
-  NativeBaseProvider,
   NumberInput,
   NumberInputField,
   NumberInputStepper,
@@ -19,6 +16,9 @@ import {
   NumberDecrementStepper,
   Collapse,
   ScrollView,
+  Alert,
+  IconButton,
+  CloseIcon,
 } from "native-base"
 import PouchDB from 'pouchdb-react-native'
 
@@ -39,10 +39,11 @@ const Settings = () => {
   const [showisf, setShowisf] = React.useState(false);
   const handleToggleisf = () => setShowisf(!showisf);
 
+  const [showAlert, setShowAlert] = React.useState(false);
+
   function load_values() {
   db.get("factors")
   .then(function (factors) {
-    console.log("factors", factors)
     setSettings({
       ...savedSettings,
       itoc: factors.itoc,
@@ -81,7 +82,7 @@ const Settings = () => {
   React.useEffect(() => {
     load_values();
     return () => {
-      setState({}); // This worked for me
+      setState({}); 
         };
     }, []);
 
@@ -101,7 +102,9 @@ const Settings = () => {
       "isfd": savedSettings.isfd,
       "isfe": savedSettings.isfe,
     })
+    setShowAlert(true);
   };
+
 
   return (
     <ScrollView contentContainerStyle={{flexGrow:1}}>
@@ -117,18 +120,28 @@ const Settings = () => {
       >
         Settings
       </Heading>
-      <Heading
-        mt="1"
-        _dark={{
-          color: "warmGray.200",
-        }}
-        color="coolGray.600"
-        fontWeight="medium"
-        size="xs"
-      >
-        Edit your Settings
-      </Heading>
-      
+
+      <Collapse isOpen={showAlert}>
+        <Alert w="100%" status={"success"}>
+            <VStack space={2} flexShrink={1} w="100%">
+              <HStack flexShrink={1} space={2} justifyContent="space-between">
+                <HStack space={2} flexShrink={1}>
+                  <Alert.Icon mt="1" />
+                  <Text fontSize="md" color="coolGray.800">
+                    Successfully Saved!
+                  </Text>
+                </HStack>
+                <IconButton
+                  variant="unstyled"
+                  icon={<CloseIcon size="3" color="coolGray.600" />}
+                  onPress={() => setShowAlert(false)}
+                />
+              </HStack>
+            </VStack>
+          </Alert>
+          </Collapse>
+
+
       <VStack space={10} mt="5">
         <FormControl>
           <FormControl.Label>I:C Ratio</FormControl.Label>
