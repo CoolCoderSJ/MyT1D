@@ -1,5 +1,4 @@
 import * as React from "react"
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import {
   Box,
   Text,
@@ -25,9 +24,6 @@ import PouchDB from 'pouchdb-react-native'
 console.disableYellowBox = true;
 
 const db = new PouchDB('settings')
-
-
-const Stack = createNativeStackNavigator();
 
 
 const Settings = () => {
