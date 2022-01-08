@@ -20,12 +20,13 @@ import {
   Icon,
 } from 'native-base';
 
+import HomeScreen from '../screens/home';
 import InsulinScreen from '../screens/insulin';
+import DexcomScreen from '../screens/dexcom';
 import SettingsScreen from '../screens/settings';
 
 
 const Drawer = createDrawerNavigator();
-
 
 const getIcon = (screenName) => {
   switch (screenName) {
@@ -97,9 +98,9 @@ function MyDrawer() {
     <Box safeArea flex={1}>
       <Drawer.Navigator
         drawerContent={(props) => <CustomDrawerContent {...props} />}>
-        <Drawer.Screen name="Home" component={InsulinScreen} />
+        <Drawer.Screen name="Home" component={HomeScreen} />
         <Drawer.Screen name="Insulin" component={InsulinScreen} />
-        <Drawer.Screen name="Dexcom" component={InsulinScreen} />
+        <Drawer.Screen name="Dexcom" component={DexcomScreen} />
         <Drawer.Screen name="Recipes" component={InsulinScreen} />
         <Drawer.Screen name="Settings" component={SettingsScreen} />
       </Drawer.Navigator>
