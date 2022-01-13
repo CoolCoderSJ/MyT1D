@@ -18,13 +18,18 @@ import {
   HStack,
   Divider,
   Icon,
+  Spinner,
+  Container
 } from 'native-base';
+import PouchDB from 'pouchdb-react-native';
+import axios from 'axios';
 
 import HomeScreen from '../screens/home';
 import InsulinScreen from '../screens/insulin';
 import DexcomScreen from '../screens/dexcom';
 import SettingsScreen from '../screens/settings';
 
+let isLoading = true
 
 const Drawer = createDrawerNavigator();
 
@@ -94,8 +99,9 @@ function CustomDrawerContent(props) {
   );
 }
 function MyDrawer() {
-  return (
-    <Box safeArea flex={1}>
+
+  return (      
+      <Box safeArea flex={1}>
       <Drawer.Navigator
         drawerContent={(props) => <CustomDrawerContent {...props} />}>
         <Drawer.Screen name="Home" component={HomeScreen} />
@@ -105,15 +111,98 @@ function MyDrawer() {
         <Drawer.Screen name="Settings" component={SettingsScreen} />
       </Drawer.Navigator>
     </Box>
+      
   );
 }
 
 
 export default function App() {
+  const db = new PouchDB('readings')
+const logindb = new PouchDB('settings')
+
+
+const [data, setData] = React.useState({});
+    
+
+logindb.get("login").then(function (loginInfo) {
+    setData({
+        ...data,
+        username: loginInfo.login.username,
+        password: loginInfo.login.password
+    })
+})
+
+  axios.post("https://share2.dexcom.com/ShareWebServices/Services/General/AuthenticatePublisherAccount", {
+    "accountName": data.username,
+    "password": data.password,
+    "applicationId": "d89443d2-327c-4a6f-89e5-496bbb0317db",
+})
+.then((response) => {
+
+const account_id = response.data;
+axios.post("https://share2.dexcom.com/ShareWebServices/Services/General/LoginPublisherAccountById", {
+    "accountId": account_id,
+    "password": data.password,
+    "applicationId": "d89443d2-327c-4a6f-89e5-496bbb0317db",
+})
+.then((response) => {
+const session_id = response.data;
+
+axios.post(`https://share2.dexcom.com/ShareWebServices/Services/Publisher/ReadPublisherLatestGlucoseValues?sessionId=${session_id}&minutes=1440&maxCount=36`)
+.then((response) => {
+response = response.data;
+
+let readings = []
+for (let i=0; i<response.length; i++) {
+    readings.push({
+        value: response[i].Value,
+        trend: response[i].Trend
+    })
+}
+
+db.get("readings")
+.then(doc => {
+  db.put({
+    "_id": "readings",
+    "_rev": doc['_rev'],
+    readings: readings
+  })
+})
+.catch(() => {
+  db.put({
+    "_id": "readings",
+    readings: readings
+  })
+})
+
+isLoading = false;
+
+})
+.catch(error => console.error(error.response))
+})
+.catch(error => console.error(error.response))
+})
+.catch(error => console.error(error.response))
+
+
   return (
     <NavigationContainer independent={true}>
       <NativeBaseProvider>
-        <MyDrawer />
+
+      {isLoading &&
+      <Center flex={1} px="3">
+      <HStack space={2} alignItems="center">
+        <Spinner size="lg" accessibilityLabel="Loading posts" />
+        <Heading color="primary.500" fontSize="3xl">
+          Loading
+        </Heading>
+      </HStack>
+      </Center>
+      }
+
+      {!isLoading &&
+       <MyDrawer /> 
+      }
       </NativeBaseProvider>
     </NavigationContainer>
   );

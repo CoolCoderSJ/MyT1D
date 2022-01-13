@@ -11,49 +11,38 @@ import {
   HStack,
   Center,
   NativeBaseProvider,
-  CircularProgress
+  CircularProgress,
+  Container,
+  Spinner
 } from "native-base"
 import PouchDB from 'pouchdb-react-native'
-
 
 console.disableYellowBox = true;
 
 const db = new PouchDB('readings')
 
-let first_value = "Loading..."
+let first_value = "e";
 
-function Dexcom () {
 
-  const [value, setValue] = React.useState(0);
+export default () => {
+  const [, forceUpdate] = React.useReducer(x => x + 1, 0);
 
-  function forceUpdate(){
-    setValue(value => value + 1);
-}
   db.get("readings")
   .then((dbOutput) => {
-    console.log(dbOutput.readings)
     first_value = dbOutput.readings[0].value
     console.log(first_value)
     forceUpdate()
   })
 
-  console.log("first", first_value)
-
   return (
-    <Center flex={1} px="3">
     <Box safeArea p="2" py="8" w="90%" maxW="290">
-      <VStack space={3} mt="5">
-      <Text>
-        {first_value}
-      </Text>
-      </VStack>
-    </Box>
+    <Center flex={1} px="3">
+    <VStack space={3} mt="5">
+    <Heading color="primary.500" fontSize="3xl" style={{textAlign: 'center'}}>
+      {first_value}
+    </Heading>
+    </VStack>
     </Center>
-  )
-}
-
-export default () => {
-  return (
-    <Dexcom />
+    </Box>
   )
 }
