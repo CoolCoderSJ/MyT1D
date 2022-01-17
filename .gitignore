@@ -10,4 +10,4 @@ npm-debug.*
 web-build/
 .vscode
 .DS_Store
-
+.env

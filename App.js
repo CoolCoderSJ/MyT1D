@@ -17,26 +17,22 @@ import {
   HStack,
   Center,
   NativeBaseProvider,
-} from "native-base"
+} from "native-base";
+import { PermissionsAndroid, SafeAreaView, StatusBar, StyleSheet, View } from "react-native";
 import HomeScreen from './screens/index';
-import PouchDB from 'pouchdb-react-native'
+import Database from './db/handler.js';
 import axios from 'axios';
 
 console.disableYellowBox = true;
 
-const db = new PouchDB('settings')
-
-
 const Stack = createNativeStackNavigator();
 
+db = new Database("settings")
 
 
 const Login = ({ navigation }) => {
-  db.get("login").then(function(value) { 
-    if (!value) {
-      return
-    }
-    else {
+  db.get("login").then(result => {
+    if (result) {
       navigation.navigate('Home')
     }
   })
@@ -45,14 +41,14 @@ const Login = ({ navigation }) => {
   const [errors, setErrors] = React.useState({});
 
   const validate = async () => {
-  
+
     if (formData.username === undefined || formData.password === undefined) {
       setErrors({
         ...errors,
         name: 'Both fields are required',
       });
       return false;
-    } 
+    }
 
   try {
     const response = await axios.post("https://share2.dexcom.com/ShareWebServices/Services/General/AuthenticatePublisherAccount", {
@@ -83,13 +79,11 @@ const Login = ({ navigation }) => {
     validate()
     .then(function (check) {
     if (check) {
-      db.put({
-        "_id": "login",
-        "login": {
-          "username": formData['username'],
-          "password": formData['password']
-        }
-      });
+
+      db.set("login", {
+        username: formData.username,
+        password: formData.password
+      })
       navigation.navigate('Home')
     }
     else {
@@ -122,7 +116,7 @@ const Login = ({ navigation }) => {
       >
         Sign in using your Dexcom credentials
       </Heading>
-      
+
       <VStack space={3} mt="5">
         <FormControl isRequired={true} isInvalid={errors['name']}>
           <FormControl.Label>Username</FormControl.Label>

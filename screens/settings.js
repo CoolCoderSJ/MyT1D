@@ -18,13 +18,13 @@ import {
   Alert,
   IconButton,
   CloseIcon,
-} from "native-base"
-import PouchDB from 'pouchdb-react-native'
+} from "native-base";
+import Database from '../db/handler.js';
+
+db = new Database("settings")
+
 
 console.disableYellowBox = true;
-
-const db = new PouchDB('settings')
-
 
 const Settings = () => {
   const [savedSettings, setSettings] = React.useState({});
@@ -39,22 +39,22 @@ const Settings = () => {
 
   function load_values() {
   db.get("factors")
-  .then(function (factors) {
-    setSettings({
-      ...savedSettings,
-      itoc: factors.itoc,
-      itocm: factors.itocm,
-      itocl: factors.itocl,
-      itoca: factors.itoca,
-      itocd: factors.itocd,
-      itoce: factors.itoce,
-      isf: factors.isf,
-      isfm: factors.isfm,
-      isfl: factors.isfl,
-      isfa: factors.isfa,
-      isfd: factors.isfd,
-      isfe: factors.isfe,
-    })
+  .then(factors => {
+  setSettings({
+    ...savedSettings,
+    itoc: factors.itoc,
+    itocm: factors.itocm,
+    itocl: factors.itocl,
+    itoca: factors.itoca,
+    itocd: factors.itocd,
+    itoce: factors.itoce,
+    isf: factors.isf,
+    isfm: factors.isfm,
+    isfl: factors.isfl,
+    isfa: factors.isfa,
+    isfd: factors.isfd,
+    isfe: factors.isfe,
+  })
   })
   .catch(error => {
     setSettings({
@@ -78,13 +78,13 @@ const Settings = () => {
   React.useEffect(() => {
     load_values();
     return () => {
-      setState({}); 
+      setState({});
         };
     }, []);
 
   const onSave = () => {
-    db.put({
-      "_id": "factors",
+    db.set('factors', {
+      "name": "factors",
       "itoc": savedSettings.itoc,
       "itocm": savedSettings.itocm,
       "itocl": savedSettings.itocl,

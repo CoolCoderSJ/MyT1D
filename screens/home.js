@@ -15,7 +15,6 @@ import {
   Spinner,
   Container
 } from 'native-base';
-import PouchDB from 'pouchdb-react-native'
 import axios from 'axios';
 
 
