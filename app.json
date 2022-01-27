@@ -1,4 +1,6 @@
 {
+  "name": "Diabetic-Manager",
+  "displayName": "Diabetic Manager",
   "expo": {
     "name": "Diabetic-Manager",
     "slug": "Diabetic-Manager",

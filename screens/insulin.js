@@ -31,13 +31,6 @@ export default function App() {
 
   const filteredItems = React.useMemo(() => {
     let meals = [];
-
-    db.set("meals", {
-      "White Rice": 40,
-      "Brown Rice": 30,
-      "Grapes": 7,
-    }).then(() => {
-
     
     db.get("meals").then(function(result){
       for (let i=0; i<Object.keys(result).length; i++){
@@ -55,7 +48,6 @@ export default function App() {
       (item) => item.value.toLowerCase().indexOf(filterText.toLowerCase()) > -1
     ));
 
-    });
     });
     
     console.log("filter list", filterList);

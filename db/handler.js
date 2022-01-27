@@ -28,7 +28,7 @@ export default class Database {
     return JSON.parse(text)[key]
   }
 
-  async getall () {
+  async remove (key) {
     const filepath = FileSystem.documentDirectory + "db/" + this.db
     try {
       text = await FileSystem.readAsStringAsync(filepath)
@@ -46,27 +46,9 @@ export default class Database {
       await FileSystem.writeAsStringAsync(filepath, "{}")
       text = await FileSystem.readAsStringAsync(filepath)
     }
-    console.log(this.db, text)
-    return JSON.parse(text)
-  }
-
-  async clear () {
-    const filepath = FileSystem.documentDirectory + "db/" + this.db
-    try {
-      text = await FileSystem.readAsStringAsync(filepath)
-    }
-
-    catch {
-      try {
-        dir = await FileSystem.readDirectoryAsync(FileSystem.documentDirectory + "db")
-        console.log(dir)
-      }
-      catch {
-        await FileSystem.makeDirectoryAsync(FileSystem.documentDirectory + "db")
-      }
-    }
-
-    await FileSystem.writeAsStringAsync(filepath, "{}");
+    let data = JSON.parse(text)
+    delete data[key]
+    await FileSystem.writeAsStringAsync(filepath, JSON.stringify(data))
   }
 
   async set (key, data) {
@@ -94,4 +76,24 @@ export default class Database {
     await FileSystem.writeAsStringAsync(filepath, JSON.stringify(result))
     return result
   }
+
+  async clear () {
+    const filepath = FileSystem.documentDirectory + "db/" + this.db
+    try {
+      text = await FileSystem.readAsStringAsync(filepath)
+    }
+
+    catch {
+      try {
+        dir = await FileSystem.readDirectoryAsync(FileSystem.documentDirectory + "db")
+        console.log(dir)
+      }
+      catch {
+        await FileSystem.makeDirectoryAsync(FileSystem.documentDirectory + "db")
+      }
+    }
+
+    await FileSystem.writeAsStringAsync(filepath, "{}")
+  }
+
 }

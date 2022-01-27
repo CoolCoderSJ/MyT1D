@@ -40,6 +40,7 @@ const Settings = () => {
   function load_values() {
   db.get("factors")
   .then(factors => {
+    console.log("factors", factors);
   setSettings({
     ...savedSettings,
     itoc: factors.itoc,
@@ -75,12 +76,11 @@ const Settings = () => {
   })
 }
 
-  React.useEffect(() => {
-    load_values();
-    return () => {
-      setState({});
-        };
-    }, []);
+console.log(savedSettings)
+if (!savedSettings) {
+  console.log("loading values")
+  load_values();
+  }
 
   const onSave = () => {
     db.set('factors', {
@@ -98,7 +98,9 @@ const Settings = () => {
       "isfd": savedSettings.isfd,
       "isfe": savedSettings.isfe,
     })
+    .then(() => {
     setShowAlert(true);
+    });
   };
 
 
