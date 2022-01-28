@@ -20,18 +20,20 @@ import {
 } from "native-base";
 import { PermissionsAndroid, SafeAreaView, StatusBar, StyleSheet, View } from "react-native";
 import HomeScreen from './screens/index';
-import Database from './db/handler.js';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
 console.disableYellowBox = true;
 
 const Stack = createNativeStackNavigator();
 
-db = new Database("settings")
+const set = async (key, value) => {  try {    await AsyncStorage.setItem(key, value)  } catch (e) {   console.log(e)  } }
+const setObj = async (key, value) => {  try {    const jsonValue = JSON.stringify(value); await AsyncStorage.setItem(key, jsonValue)  } catch (e) {    console.log(e)  } }
+const get = async (key) => {  try {    const value = await AsyncStorage.getItem(key); if(value !== null) { try {return JSON.parse(value)} catch {return value} }  } catch(e) {    console.log(e)  }}
 
 
 const Login = ({ navigation }) => {
-  db.get("login").then(result => {
+  get("login").then(result => {
     if (result) {
       navigation.navigate('Home')
     }
@@ -80,7 +82,7 @@ const Login = ({ navigation }) => {
     .then(function (check) {
     if (check) {
 
-      db.set("login", {
+      setObj("login", {
         username: formData.username,
         password: formData.password
       })

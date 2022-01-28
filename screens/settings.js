@@ -19,9 +19,14 @@ import {
   IconButton,
   CloseIcon,
 } from "native-base";
-import Database from '../db/handler.js';
+import { Dimensions, StyleSheet, TextInput } from "react-native";
 
-db = new Database("settings")
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const set = async (key, value) => {  try {    await AsyncStorage.setItem(key, value)  } catch (e) {   console.log(e)  } }
+const setObj = async (key, value) => {  try {    const jsonValue = JSON.stringify(value); await AsyncStorage.setItem(key, jsonValue)  } catch (e) {    console.log(e)  } }
+const get = async (key) => {  try {    const value = await AsyncStorage.getItem(key); if(value !== null) { try {return JSON.parse(value)} catch {return value} }  } catch(e) {    console.log(e)  }}
+
 
 
 console.disableYellowBox = true;
@@ -38,7 +43,7 @@ const Settings = () => {
   const [showAlert, setShowAlert] = React.useState(false);
 
   function load_values() {
-  db.get("factors")
+  get("factors")
   .then(factors => {
     console.log("factors", factors);
   setSettings({
@@ -83,7 +88,7 @@ if (!savedSettings) {
   }
 
   const onSave = () => {
-    db.set('factors', {
+    setObj('factors', {
       "name": "factors",
       "itoc": savedSettings.itoc,
       "itocm": savedSettings.itocm,
@@ -103,6 +108,16 @@ if (!savedSettings) {
     });
   };
 
+
+  const styles = StyleSheet.create({
+    input: {
+        height: 40,
+        borderWidth: 1,
+        padding: 10,
+        borderRadius: 5,
+        marginBottom: 5,
+    },
+    });
 
   return (
     <ScrollView contentContainerStyle={{flexGrow:1}}>
@@ -143,69 +158,33 @@ if (!savedSettings) {
       <VStack space={10} mt="5">
         <FormControl>
           <FormControl.Label>I:C Ratio</FormControl.Label>
-            <NumberInput value={savedSettings.itoc} onChange={(value) => setSettings({ ...savedSettings, itoc: value })}>
-                <NumberInputField />
-                <NumberInputStepper>
-                    <NumberIncrementStepper />
-                    <NumberDecrementStepper />
-                </NumberInputStepper>
-            </NumberInput>
+            <TextInput style={styles.input} keyboardType="numeric" value={savedSettings.itoc} onChangeText={(value) => setSettings({ ...savedSettings, itoc: value })} />
         </FormControl>
 
         <Collapse isOpen={showitoc}>
         <FormControl>
           <FormControl.Label>I:C Ratio - Morning</FormControl.Label>
-            <NumberInput value={savedSettings.itocm} onChange={(value) => setSettings({ ...savedSettings, itocm: value })}>
-                <NumberInputField />
-                <NumberInputStepper>
-                    <NumberIncrementStepper />
-                    <NumberDecrementStepper />
-                </NumberInputStepper>
-            </NumberInput>
+            <TextInput style={styles.input} keyboardType="numeric" value={savedSettings.itocm} onChangeText={(value) => setSettings({ ...savedSettings, itocm: value })} />
         </FormControl>
 
         <FormControl>
           <FormControl.Label>I:C Ratio - Lunch</FormControl.Label>
-            <NumberInput value={savedSettings.itocl} onChange={(value) => setSettings({ ...savedSettings, itocl: value })}>
-                <NumberInputField />
-                <NumberInputStepper>
-                    <NumberIncrementStepper />
-                    <NumberDecrementStepper />
-                </NumberInputStepper>
-            </NumberInput>
+            <TextInput style={styles.input} keyboardType="numeric" value={savedSettings.itocl} onChangeText={(value) => setSettings({ ...savedSettings, itocl: value })} />
         </FormControl>
 
         <FormControl>
           <FormControl.Label>I:C Ratio - Midday Snack</FormControl.Label>
-            <NumberInput value={savedSettings.itoca} onChange={(value) => setSettings({ ...savedSettings, itoca: value })}>
-                <NumberInputField />
-                <NumberInputStepper>
-                    <NumberIncrementStepper />
-                    <NumberDecrementStepper />
-                </NumberInputStepper>
-            </NumberInput>
+            <TextInput style={styles.input} keyboardType="numeric" value={savedSettings.itoca} onChangeText={(value) => setSettings({ ...savedSettings, itoca: value })} />
         </FormControl>
 
         <FormControl>
           <FormControl.Label>I:C Ratio - Dinner</FormControl.Label>
-            <NumberInput value={savedSettings.itocd} onChange={(value) => setSettings({ ...savedSettings, itocd: value })}>
-                <NumberInputField />
-                <NumberInputStepper>
-                    <NumberIncrementStepper />
-                    <NumberDecrementStepper />
-                </NumberInputStepper>
-            </NumberInput>
+            <TextInput style={styles.input} keyboardType="numeric" value={savedSettings.itocd} onChangeText={(value) => setSettings({ ...savedSettings, itocd: value })} />
         </FormControl>
 
         <FormControl>
           <FormControl.Label>I:C Ratio - Night Snack</FormControl.Label>
-            <NumberInput value={savedSettings.itoce} onChange={(value) => setSettings({ ...savedSettings, itoce: value })}>
-                <NumberInputField />
-                <NumberInputStepper>
-                    <NumberIncrementStepper />
-                    <NumberDecrementStepper />
-                </NumberInputStepper>
-            </NumberInput>
+            <TextInput style={styles.input} keyboardType="numeric" value={savedSettings.itoce} onChangeText={(value) => setSettings({ ...savedSettings, itoce: value })} />
         </FormControl>
         </Collapse>
 
@@ -215,70 +194,34 @@ if (!savedSettings) {
 
         <FormControl>
         <FormControl.Label>Insulin Sensitivity Factor</FormControl.Label>
-            <NumberInput value={savedSettings.isf} onChange={(value) => setSettings({ ...savedSettings, isf: value })}>
-                <NumberInputField />
-                <NumberInputStepper>
-                    <NumberIncrementStepper />
-                    <NumberDecrementStepper />
-                </NumberInputStepper>
-            </NumberInput>
+            <TextInput style={styles.input} keyboardType="numeric" value={savedSettings.isf} onChangeText={(value) => setSettings({ ...savedSettings, isf: value })} />
         </FormControl>
 
 
         <Collapse isOpen={showisf}>
         <FormControl>
           <FormControl.Label>ISF - Morning</FormControl.Label>
-            <NumberInput value={savedSettings.isfm} onChange={(value) => setSettings({ ...savedSettings, isfm: value })}>
-                <NumberInputField />
-                <NumberInputStepper>
-                    <NumberIncrementStepper />
-                    <NumberDecrementStepper />
-                </NumberInputStepper>
-            </NumberInput>
+            <TextInput style={styles.input} keyboardType="numeric" value={savedSettings.isfm} onChangeText={(value) => setSettings({ ...savedSettings, isfm: value })} />
         </FormControl>
 
         <FormControl>
           <FormControl.Label>ISF - Lunch</FormControl.Label>
-            <NumberInput value={savedSettings.isfl} onChange={(value) => setSettings({ ...savedSettings, isfl: value })}>
-                <NumberInputField />
-                <NumberInputStepper>
-                    <NumberIncrementStepper />
-                    <NumberDecrementStepper />
-                </NumberInputStepper>
-            </NumberInput>
+            <TextInput style={styles.input} keyboardType="numeric" value={savedSettings.isfl} onChangeText={(value) => setSettings({ ...savedSettings, isfl: value })} />
         </FormControl>
 
         <FormControl>
           <FormControl.Label>ISF - Midday Snack</FormControl.Label>
-            <NumberInput value={savedSettings.isfa} onChange={(value) => setSettings({ ...savedSettings, isfa: value })}>
-                <NumberInputField />
-                <NumberInputStepper>
-                    <NumberIncrementStepper />
-                    <NumberDecrementStepper />
-                </NumberInputStepper>
-            </NumberInput>
+            <TextInput style={styles.input} keyboardType="numeric" value={savedSettings.isfa} onChangeText={(value) => setSettings({ ...savedSettings, isfa: value })} />
         </FormControl>
 
         <FormControl>
           <FormControl.Label>ISF - Dinner</FormControl.Label>
-            <NumberInput value={savedSettings.isfd} onChange={(value) => setSettings({ ...savedSettings, isfd: value })}>
-                <NumberInputField />
-                <NumberInputStepper>
-                    <NumberIncrementStepper />
-                    <NumberDecrementStepper />
-                </NumberInputStepper>
-            </NumberInput>
+            <TextInput style={styles.input} keyboardType="numeric" value={savedSettings.isfd} onChangeText={(value) => setSettings({ ...savedSettings, isfd: value })} />
         </FormControl>
 
         <FormControl>
           <FormControl.Label>ISF - Night Snack</FormControl.Label>
-            <NumberInput value={savedSettings.isfe} onChange={(value) => setSettings({ ...savedSettings, isfe: value })}>
-                <NumberInputField />
-                <NumberInputStepper>
-                    <NumberIncrementStepper />
-                    <NumberDecrementStepper />
-                </NumberInputStepper>
-            </NumberInput>
+            <TextInput style={styles.input} keyboardType="numeric" value={savedSettings.isfe} onChangeText={(value) => setSettings({ ...savedSettings, isfe: value })} />
         </FormControl>
         </Collapse>
 

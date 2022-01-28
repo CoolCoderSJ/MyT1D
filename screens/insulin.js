@@ -20,9 +20,12 @@ import {
   useTypeahead, 
   Typeahead,
 } from "native-base"
-import Database from '../db/handler.js';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-db = new Database("meals");
+const set = async (key, value) => {  try {    await AsyncStorage.setItem(key, value)  } catch (e) {   console.log(e)  } }
+const setObj = async (key, value) => {  try {    const jsonValue = JSON.stringify(value); await AsyncStorage.setItem(key, jsonValue)  } catch (e) {    console.log(e)  } }
+const get = async (key) => {  try {    const value = await AsyncStorage.getItem(key); if(value !== null) { try {return JSON.parse(value)} catch {return value} }  } catch(e) {    console.log(e)  }}
+
 
 export default function App() {
 
@@ -32,10 +35,10 @@ export default function App() {
   const filteredItems = React.useMemo(() => {
     let meals = [];
     
-    db.get("meals").then(function(result){
+    get("meals").then(function(result){
       for (let i=0; i<Object.keys(result).length; i++){
 
-        meals.push({id: i+1, value: Object.keys(result)[i]});
+        meals.push({id: i+1, value: result[String(i)].meal});
       }
 
 

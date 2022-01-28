@@ -27,9 +27,12 @@ import {
   StackedBarChart
 } from "react-native-chart-kit";
 import Arrow from 'react-native-arrow';
-import Database from '../db/handler.js';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-db = new Database("readings")
+const set = async (key, value) => {  try {    await AsyncStorage.setItem(key, value)  } catch (e) {   console.log(e)  } }
+const setObj = async (key, value) => {  try {    const jsonValue = JSON.stringify(value); await AsyncStorage.setItem(key, jsonValue)  } catch (e) {    console.log(e)  } }
+const get = async (key) => {  try {    const value = await AsyncStorage.getItem(key); if(value !== null) { try {return JSON.parse(value)} catch {return value} }  } catch(e) {    console.log(e)  }}
+
 
 console.disableYellowBox = true;
 
@@ -43,7 +46,7 @@ let readingValues = []
 export default () => {
   const [, forceUpdate] = React.useReducer(x => x + 1, 0);
 
-  db.get("readings")
+  get("readings")
   .then(result => {
     readings = result
     first_value = readings[0].value

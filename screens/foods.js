@@ -16,29 +16,41 @@ import {
   Spinner,
   View,
   Hidden,
+  ScrollView
 } from "native-base"
-import Database from '../db/handler.js';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-db = new Database("meals");
+const set = async (key, value) => {  try {    await AsyncStorage.setItem(key, value)  } catch (e) {   console.log(e)  } }
+const setObj = async (key, value) => {  try {    const jsonValue = JSON.stringify(value); await AsyncStorage.setItem(key, jsonValue)  } catch (e) {    console.log(e)  } }
+const get = async (key) => {  try {    const value = await AsyncStorage.getItem(key); if(value !== null) { try {return JSON.parse(value)} catch {return value} }  } catch(e) {    console.log(e)  }}
+
 
 export default function App() {
-    const [fields, setFields] = React.useState([{ value: null }]);
+    const [fields, setFields] = React.useState([{  }]);
 
-    db.get("meals").then(function(result){
+    React.useEffect(() => {
+    get("meals").then(function(result){
         let meals = result;
 
+        if (!meals) {
+          meals = {};
+        }
+
         for (let i=0; i<Object.keys(meals).length; i++){
+          console.log("index", meals[Object.keys(meals)[i]]);
+          console.log("meals", meals)
             fields.push({ 
-                meal: meals[Object.keys(meals)[i].meal],
-                carbs: meals[Object.keys(meals)[i].carbs],
-                unit: meals[Object.keys(meals)[i].unit]
+                meal: meals[String(i)].meal,
+                carbs: meals[String(i)].carbs,
+                unit: meals[String(i)].unit
              });
         }
 
         handleRemove(0);
 
-        console.log(meals, fields)
+        console.log("fields", fields)
     });
+  }, []);
 
 
     function handleChange(i, type, value) {
@@ -46,10 +58,15 @@ export default function App() {
       values[i][type] = value;
       setFields(values);
       
-      db.get("meals").then(function(result){
+      get("meals").then(function(result){
         let meals = result;
+        
+        if (!meals) {
+            meals = {};
+      }
 
         console.log("db", meals)
+
 
         meals[i] = {
             meal: fields[i].meal,
@@ -58,11 +75,9 @@ export default function App() {
         };
 
         console.log("w/o db", meals)
-        db.set("meals", meals)
+        setObj("meals", meals)
         .then(() => {
-            db.set("meals", meals).then(() => {
-                console.log("meals updated");
-            });
+            console.log("meals updated");
         });
       });
 
@@ -82,6 +97,7 @@ export default function App() {
   
 
   return (
+    <ScrollView contentContainerStyle={{flexGrow:2}}>
     <Center>
      <Box safeArea p="2" py="2" w="90%" maxW="290" h="90%">
     <Button size="lg" colorScheme="indigo" onPress={handleAdd}>
@@ -135,5 +151,6 @@ export default function App() {
       </VStack>
       </Box>
   </Center>
+  </ScrollView>
   );
 }
