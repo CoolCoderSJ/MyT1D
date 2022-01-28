@@ -87,12 +87,14 @@ export default function App() {
       const values = [...fields];
       values.push({ meal: null, carbs: null, unit: null });
       setFields(values);
+      setObj("meals", values);
     }
   
     function handleRemove(i) {
       const values = [...fields];
       values.splice(i, 1);
       setFields(values);
+      setObj("meals", values);
     }
   
 
