@@ -20,6 +20,8 @@ import {
   Typeahead
 } from "native-base"
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AutocompleteDropdown } from 'react-native-autocomplete-dropdown'
+
 
 const set = async (key, value) => {  try {    await AsyncStorage.setItem(key, value)  } catch (e) {   console.log(e)  } }
 const setObj = async (key, value) => {  try {    const jsonValue = JSON.stringify(value); await AsyncStorage.setItem(key, jsonValue)  } catch (e) {    console.log(e)  } }
@@ -36,24 +38,24 @@ export default function App() {
     values[i][type] = value;
     setFields(values);
     
-    get("insulin").then(function(result){
-      let meals = result;
+    // get("insulin").then(function(result){
+    //   let meals = result;
       
-      if (!meals) {
-          meals = {};
-    }
+    //   if (!meals) {
+    //       meals = {};
+    // }
 
-      meals[i] = {
-          meal: fields[i].meal,
-          carbs: fields[i].carbs,
-          unit: fields[i].unit
-      };
+    //   meals[i] = {
+    //       meal: fields[i].meal,
+    //       carbs: fields[i].carbs,
+    //       unit: fields[i].unit
+    //   };
 
-      setObj("insulin", meals)
-      .then(() => {
-          console.log("meals updated");
-      });
-    });
+    //   setObj("insulin", meals)
+    //   .then(() => {
+    //       console.log("meals updated");
+    //   });
+    // });
 
   }
 
@@ -81,18 +83,13 @@ export default function App() {
     get("meals").then(function(result){
       for (let i=0; i<Object.keys(result).length; i++){
 
-        meals.push({id: i+1, value: result[String(i)].meal});
+        meals.push({id: i+1, title: result[String(i)].meal});
       }
 
 
     console.log(meals);
-    console.log("filtered", meals.filter(
-      (item) => item.value.toLowerCase().indexOf(filterText.toLowerCase()) > -1
-    ));
 
-    setFilterList(meals.filter(
-      (item) => item.value.toLowerCase().indexOf(filterText.toLowerCase()) > -1
-    ));
+    setFilterList(meals);
 
     });
     
@@ -129,27 +126,43 @@ export default function App() {
         return (
             <FormControl key={`${field}-${idx}`}>
 
-            <Typeahead
-                    options={filteredItems}
-                    onChange={setFilterText}
-                    getOptionKey={(item) => item.id}
-                    getOptionLabel={(item) => item.value}
-                    placeholder="Meal name"
-                  />
+            <FormControl.Label>Meal</FormControl.Label>
 
+            <AutocompleteDropdown
+              clearOnFocus={false}
+              closeOnBlur={true}
+              closeOnSubmit={true}
+              dataSet={filterList}
+              onChangeText={e => handleChange(idx, "meal", e)}
+              onSelectItem={(item) => {
+                setFilterText(item.title);
+
+              }}
+            />
+
+            <FormControl.Label>Serving Amount (1, 0.75, 0.5, etc.)</FormControl.Label>
             <TextInput
-              placeholder="Carbs"
+              style={styles.input}
+              onChangeText={e => handleChange(idx, "serving", e)}
+              value={field.serving}
+              keyboardType="numeric"
+            />
+
+            <FormControl.Label>Carbs</FormControl.Label>
+            <TextInput
               style={styles.input}
               onChangeText={e => handleChange(idx, "carbs", e)}
               value={field.carbs}
               keyboardType="numeric"
             />
+
+            <FormControl.Label>Unit (e.g. cup, oz, etc.)</FormControl.Label>
             <TextInput
-              placeholder="Unit (e.g. cup, oz, etc.)"
               style={styles.input}
               onChangeText={e => handleChange(idx, "unit", e)}
               value={field.unit}
             />
+
             <Button size="lg" colorScheme="error" onPress={() => handleRemove(idx, field)}>
                 Remove Food
             </Button>

@@ -39,6 +39,7 @@
     "react-is": "*",
     "react-native": "0.63.4",
     "react-native-arrow": "^1.0.3",
+    "react-native-autocomplete-dropdown": "^1.1.6",
     "react-native-chart-kit": "^6.11.0",
     "react-native-eject": "^0.1.2",
     "react-native-file-access": "1.7.1",
