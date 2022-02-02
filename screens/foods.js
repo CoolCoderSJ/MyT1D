@@ -100,6 +100,7 @@ export default function App() {
 
   return (
     <ScrollView contentContainerStyle={{flexGrow:2}}>
+    <View style={{padding: 40}}>
     <Center>
      <Box safeArea p="2" py="2" w="90%" maxW="290" h="90%">
     <Button size="lg" colorScheme="indigo" onPress={handleAdd}>
@@ -153,6 +154,7 @@ export default function App() {
       </VStack>
       </Box>
   </Center>
+  </View>
   </ScrollView>
   );
 }

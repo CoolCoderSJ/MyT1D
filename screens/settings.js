@@ -121,6 +121,7 @@ if (!savedSettings) {
 
   return (
     <ScrollView contentContainerStyle={{flexGrow:1}}>
+    <View style={{padding: 40}}>
     <Center flex={1} px="3">
     <Box safeArea p="2" py="2" w="90%" maxW="290" h="90%">
       <Heading
@@ -236,6 +237,7 @@ if (!savedSettings) {
       </VStack>
     </Box>
     </Center>
+    </View>
     </ScrollView>
   )
 }

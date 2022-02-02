@@ -21,7 +21,7 @@ import {
 } from "native-base"
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AutocompleteDropdown } from 'react-native-autocomplete-dropdown'
-
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 const set = async (key, value) => {  try {    await AsyncStorage.setItem(key, value)  } catch (e) {   console.log(e)  } }
 const setObj = async (key, value) => {  try {    const jsonValue = JSON.stringify(value); await AsyncStorage.setItem(key, jsonValue)  } catch (e) {    console.log(e)  } }
@@ -76,8 +76,9 @@ export default function App() {
 
   const [filterText, setFilterText] = React.useState('');
   const [filterList, setFilterList] = React.useState([]);
+  const [mealsList, setMealsList] = React.useState([]);
 
-  const filteredItems = React.useMemo(() => {
+  React.useMemo(() => {
     let meals = [];
     
     get("meals").then(function(result){
@@ -90,6 +91,7 @@ export default function App() {
     console.log(meals);
 
     setFilterList(meals);
+    setMealsList(result);
 
     });
     
@@ -99,9 +101,40 @@ export default function App() {
   }, [filterText]);
 
 
+  const [servingSizes, setServingSizes] = React.useState({});
+  const [date, setDate] = React.useState(new Date());
+  const [show, setShow] = React.useState(false);
+
+  const showDatePicker = () => {
+    setShow(true);
+  }
+
   return (
+    <ScrollView contentContainerStyle={{flexGrow:1}}>
+     <View style={{padding: 40}}>
   <Center>
      <Box safeArea p="2" py="2" w="90%" maxW="290" h="90%">
+     
+     <View style={{paddingBottom: 10}}>
+     <Button size="lg" colorScheme="indigo" onPress={showDatePicker}>
+        {date.getMonth()+1 + "/" + date.getDate() + "/" + date.getFullYear()}
+    </Button>
+    </View>
+    
+     {show && (
+        <DateTimePicker
+          testID="dateTimePicker"
+          value={date}
+          mode="date"
+          is24Hour={false}
+          display="default"
+          onChange={(e, selectedDate) => {
+            setDate(selectedDate || date);
+            setShow(false);
+          }}
+        />
+      )}
+
     <Button size="lg" colorScheme="indigo" onPress={handleAdd}>
         Add Food
     </Button>
@@ -135,15 +168,39 @@ export default function App() {
               dataSet={filterList}
               onChangeText={e => handleChange(idx, "meal", e)}
               onSelectItem={(item) => {
+                if (item) {
+                  console.log("item", item);
                 setFilterText(item.title);
-
-              }}
+                let mealObj = mealsList[item.id-1];
+                console.log("mealobj", mealObj)
+                let fieldset = fields
+                console.log("fieldset", fieldset)
+                fieldset[idx]['serving'] = "1"
+                fieldset[idx]['carbs'] = mealObj.carbs
+                fieldset[idx]['unit'] = mealObj.unit
+                setFields(fieldset)
+                let servingSize = servingSizes;
+                servingSize[idx] = mealObj.carbs;
+                setServingSizes(servingSize)
+                }
+                handleChange(idx, "meal", item);
+                }
+              }
             />
 
             <FormControl.Label>Serving Amount (1, 0.75, 0.5, etc.)</FormControl.Label>
             <TextInput
               style={styles.input}
-              onChangeText={e => handleChange(idx, "serving", e)}
+              onChangeText={e => {
+                console.log(servingSizes)
+                if (servingSizes[idx]) {
+                  let fieldset = fields
+                  console.log(Number(e), servingSizes[idx])
+                  fieldset[idx]['carbs'] = String(Number(e)*servingSizes[idx])
+                  setFields(fieldset)
+                }
+                handleChange(idx, "serving", e)
+                }}
               value={field.serving}
               keyboardType="numeric"
             />
@@ -172,6 +229,8 @@ export default function App() {
       </VStack>
       </Box>
   </Center>
+  </View>
+  </ScrollView>
 
   );
 }
