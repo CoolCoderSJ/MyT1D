@@ -18,6 +18,7 @@ import {
   Alert,
   IconButton,
   CloseIcon,
+  View
 } from "native-base";
 import { Dimensions, StyleSheet, TextInput } from "react-native";
 
@@ -42,7 +43,7 @@ const Settings = () => {
 
   const [showAlert, setShowAlert] = React.useState(false);
 
-  function load_values() {
+  React.useEffect(() => {
   get("factors")
   .then(factors => {
     console.log("factors", factors);
@@ -79,13 +80,10 @@ const Settings = () => {
       isfe:  0,
     })
   })
-}
+}, []);
 
 console.log(savedSettings)
-if (!savedSettings) {
-  console.log("loading values")
-  load_values();
-  }
+
 
   const onSave = () => {
     setObj('factors', {
