@@ -27,6 +27,7 @@ import HomeScreen from '../screens/home';
 import MealsScreen from '../screens/foods';
 import InsulinScreen from '../screens/insulin';
 import DexcomScreen from '../screens/dexcom';
+import RecipesScreen from '../screens/recipes';
 import SettingsScreen from '../screens/settings';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -116,7 +117,7 @@ function MyDrawer() {
         <Drawer.Screen name="Meals" component={MealsScreen} />
         <Drawer.Screen name="Insulin" component={InsulinScreen} />
         <Drawer.Screen name="Dexcom" component={DexcomScreen} />
-        <Drawer.Screen name="Recipes" component={InsulinScreen} />
+        <Drawer.Screen name="Recipes" component={RecipesScreen} />
         <Drawer.Screen name="Settings" component={SettingsScreen} />
       </Drawer.Navigator>
     </Box>
