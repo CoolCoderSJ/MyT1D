@@ -18,8 +18,11 @@ import {
   Hidden,
   ScrollView,
   Typeahead,
-  Input
+  Input,
+  Icon,
+  Pressable
 } from "native-base"
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AutocompleteDropdown } from 'react-native-autocomplete-dropdown'
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -48,6 +51,7 @@ get("recipes").then((result) => {
 })
 
 export default function App() {
+  const [, forceUpdate] = React.useReducer(x => x + 1, 0);
 
   const [filterList, setFilterList] = React.useState([]);
   const [mealsList, setMealsList] = React.useState([]);
@@ -120,16 +124,30 @@ export default function App() {
 
   React.useMemo(() => {
     let meals = [];
+    let carbFood = [];
     
     get("meals").then(function(result){
       for (let i=0; i<Object.keys(result).length; i++){
-
         meals.push({id: i+1, title: result[String(i)].meal});
+
+        carbFood.push(result[String(i)]);
       }
 
+      get("recipes").then((result) => {
+        for (let i=meals.length; i<Object.keys(result).length+1; i++){
+          meals.push({id: i+1, title: result[i-1].name});
 
-    setFilterList(meals);
-    setMealsList(result);
+          carbFood.push({
+            meal: result[i-1].name,
+            carbs: String((Number(result[i-1].carbs)/Number(result[i-1].serving)).toFixed()),
+            unit: result[i-1].unit
+          });
+        }
+
+        console.log("meals", meals);
+        setFilterList(meals);
+        setMealsList(carbFood);
+      })
 
     calculateCarbs()
 
@@ -160,24 +178,31 @@ export default function App() {
      
      {!showMealEditor &&
         <VStack space={10} mt="5">
-        <View style={{paddingBottom: 10}}>
-     <Button size="lg" colorScheme="indigo" onPress={() => {recipeId = recipes.length; fetchMeals();}}>
-        Add Recipe
-    </Button>
-    </View>
-
 
      {recipes.map((recipe, idx) => {
          console.log(idx)
 
             return (
-     <View style={{paddingBottom: 10}}>
-     <Button size="lg" colorScheme="indigo" onPress={() => {recipeId = idx; fetchMeals()}}>
+              <HStack space={3}>
+     <View>
+     <Button w="100%" size="lg" colorScheme="indigo" onPress={() => {recipeId = idx; fetchMeals()}}>
         {recipe.name}
     </Button>
     </View>
+
+    <Button size="sm" colorScheme="error" onPress={() => {recipes.splice(idx, 1); setObj('recipes', recipes); forceUpdate()}} variant="outline">
+    Remove
+          </Button>
+    </HStack>
             )
      })}
+     <Button size="lg" colorScheme="indigo" onPress={() => {recipeId = recipes.length; fetchMeals();}} variant="outline">
+      <Icon
+            color='primary.500'
+            size="8"
+            as={<Ionicons name="add-outline" />}
+          />
+          </Button>
      </VStack>
      }
 
@@ -220,9 +245,6 @@ export default function App() {
             </Button>
             </View>
 
-    <Button size="lg" colorScheme="indigo" onPress={handleAdd}>
-        Add Food
-    </Button>
 
     <VStack space={10} mt="5">
     {
@@ -250,6 +272,8 @@ export default function App() {
         }
 
         return (
+          <HStack space="7">
+          <View alignItems={'flex-start'}>
             <FormControl key={`${field}-${idx}`}>
 
             <FormControl.Label>Meal</FormControl.Label>
@@ -259,7 +283,7 @@ export default function App() {
                 "value": mealTitle,
               }}
               clearOnFocus={false}
-              closeOnBlur={true}
+              closeOnBlur={false}
               closeOnSubmit={true}
               dataSet={filterList}
               onChangeText={e => handleChange(idx, "meal", e)}
@@ -310,13 +334,26 @@ export default function App() {
               onChangeText={e => handleChange(idx, "unit", e)}
               value={field.unit}
             />
-
-            <Button size="lg" colorScheme="error" onPress={() => handleRemove(idx, field)}>
-                Remove Food
-            </Button>
           </FormControl>
+          </View>
+          <Button size="lg" colorScheme="error" onPress={() => handleRemove(idx, field)} variant="outline">
+          <Icon
+            color='error.500'
+            size="8"
+            as={<Ionicons name="trash-outline" />}
+          />
+          </Button>
+          </HStack>
         );
       })}
+
+      <Button size="lg" colorScheme="indigo" onPress={handleAdd} variant="outline">
+      <Icon
+            color='primary.500'
+            size="8"
+            as={<Ionicons name="add-outline" />}
+          />
+          </Button>
 
       <View style={{paddingTop: 20, paddingBottom: 20}}>
       <Text fontSize="lg" style={{textAlign: 'center'}}>Total Carbs: {recipes[recipeId]['carbs']}</Text>

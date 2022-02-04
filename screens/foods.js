@@ -1,5 +1,7 @@
 import * as React from "react"
 import { Dimensions, StyleSheet, TextInput } from "react-native";
+import { Ionicons } from '@expo/vector-icons';
+
 import {
   Box,
   Text,
@@ -16,7 +18,8 @@ import {
   Spinner,
   View,
   Hidden,
-  ScrollView
+  ScrollView,
+  Icon
 } from "native-base"
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -103,9 +106,6 @@ export default function App() {
     <View style={{padding: 40}}>
     <Center>
      <Box safeArea p="2" py="2" w="90%" maxW="290" h="90%">
-    <Button size="lg" colorScheme="indigo" onPress={handleAdd}>
-        Add Food
-    </Button>
 
     <VStack space={10} mt="5">
         {
@@ -125,6 +125,8 @@ export default function App() {
         });
 
         return (
+          <HStack space={7}>
+          <View alignItems={'flex-start'}>
             <FormControl key={`${field}-${idx}`}>
             <TextInput
               placeholder="Meal name"
@@ -149,8 +151,25 @@ export default function App() {
                 Remove Food
             </Button>
           </FormControl>
+          </View>
+
+          <Button size="lg" colorScheme="error" onPress={() => handleRemove(idx, field)} variant="outline">
+          <Icon
+            color='error.500'
+            size="8"
+            as={<Ionicons name="trash-outline" />}
+          />
+          </Button>
+          </HStack>
         );
       })}
+      <Button size="lg" colorScheme="indigo" onPress={handleAdd} variant="outline">
+      <Icon
+            color='primary.500'
+            size="8"
+            as={<Ionicons name="add-outline" />}
+          />
+          </Button>
       </VStack>
       </Box>
   </Center>
