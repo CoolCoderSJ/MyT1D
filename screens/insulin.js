@@ -236,14 +236,18 @@ export default function App() {
       }
 
       get("recipes").then((result) => {
-        for (let i=meals.length; i<Object.keys(result).length+1; i++){
-          meals.push({id: i+1, title: result[i-1].name});
+        console.log("result", result)
+        let iterId = meals.length;
+        for (let i=0; i<result.length; i++){
+          meals.push({id: iterId+1, title: result[i].name});
 
           carbFood.push({
-            meal: result[i-1].name,
-            carbs: String((Number(result[i-1].carbs)/Number(result[i-1].serving)).toFixed()),
-            unit: result[i-1].unit
+            meal: result[i].name,
+            carbs: String((Number(result[i].carbs)/Number(result[i].serving)).toFixed()),
+            unit: result[i].unit
           });
+
+          iterId += 1;
         }
 
         console.log("meals", meals);
