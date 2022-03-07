@@ -249,11 +249,11 @@ export default function App() {
 
           iterId += 1;
         }
-
-        console.log("meals", meals);
-        setFilterList(meals);
-        setMealsList(carbFood);
       })
+      
+      console.log("meals", meals);
+      setFilterList(meals);
+      setMealsList(carbFood);
 
     });
     
