@@ -23,6 +23,7 @@ import {
 } from "native-base"
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+
 const set = async (key, value) => {  try {    await AsyncStorage.setItem(key, value)  } catch (e) {   console.log(e)  } }
 const setObj = async (key, value) => {  try {    const jsonValue = JSON.stringify(value); await AsyncStorage.setItem(key, jsonValue)  } catch (e) {    console.log(e)  } }
 const get = async (key) => {  try {    const value = await AsyncStorage.getItem(key); if(value !== null) { try {return JSON.parse(value)} catch {return value} }  } catch(e) {    console.log(e)  }}
@@ -69,12 +70,14 @@ export default function App() {
       }
 
         console.log("db", meals)
+        console.log(meals[i])
 
 
         meals[i] = {
             meal: fields[i].meal,
             carbs: fields[i].carbs,
-            unit: fields[i].unit
+            unit: fields[i].unit,
+            usedMeals: meals[i].usedMeals
         };
 
         console.log("w/o db", meals)
@@ -84,11 +87,12 @@ export default function App() {
         });
       });
 
+
     }
   
     function handleAdd() {
       const values = [...fields];
-      values.push({ meal: null, carbs: null, unit: null });
+      values.push({ meal: null, carbs: null, unit: null, usedMeals: [] });
       setFields(values);
       setObj("meals", values);
     }
@@ -147,9 +151,7 @@ export default function App() {
               onChangeText={e => handleChange(idx, "unit", e)}
               value={field.unit}
             />
-            <Button size="lg" colorScheme="error" onPress={() => handleRemove(idx, field)}>
-                Remove Food
-            </Button>
+
           </FormControl>
           </View>
 

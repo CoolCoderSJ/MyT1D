@@ -20,11 +20,13 @@ import {
   ScrollView,
   Typeahead,
   Icon,
-  Pressable
+  Pressable,
+  Switch
 } from "native-base"
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AutocompleteDropdown } from 'react-native-autocomplete-dropdown'
 import DateTimePicker from '@react-native-community/datetimepicker';
+import ma from 'moving-averages'
 
 const set = async (key, value) => {  try {    await AsyncStorage.setItem(key, value)  } catch (e) {   console.log(e)  } }
 const setObj = async (key, value) => {  try {    const jsonValue = JSON.stringify(value); await AsyncStorage.setItem(key, jsonValue)  } catch (e) {    console.log(e)  } }
@@ -33,10 +35,10 @@ const get = async (key) => {  try {    const value = await AsyncStorage.getItem(
 let foodUnits = "";
 let correction = "";
 let totalUnits = "";
-let totalUnitsRounded = "";
 let meal = "";
 let factors = {};
 let readings = [];
+let sugarValue = 0;
 
 const styles = StyleSheet.create({
   input: {
@@ -47,6 +49,9 @@ const styles = StyleSheet.create({
       marginBottom: 5,
   },
   });
+
+let mainMealSelected = false
+let mainMeal = undefined
 
 export default function App() {
   const [, forceUpdate] = React.useReducer(x => x + 1, 0);
@@ -85,15 +90,10 @@ export default function App() {
   const calculateInsulin = () => {
     get(`meal${date.getMonth()+1}${date.getDate()}${date.getFullYear()}${meal}`).then((values) => {
 
-    console.log("values", values)
-    console.log("meal", meal)
-
     let specificItoCFactor = null;
     let specificISFFactor = null;
     let generalIToCFactor = factors.itoc;
     let generalISFFactor = factors.isf;
-
-    console.log("generalISFFactor", generalISFFactor);
 
     
     switch (meal) {
@@ -128,6 +128,9 @@ export default function App() {
     
 
     let dexVal = readings[0].value;
+
+    sugarValue = dexVal;
+
     let threshold = null;
 
     switch (meal) {
@@ -146,43 +149,18 @@ export default function App() {
       correction = '0';
     }
 
-    console.log("meal", meal);
-
-    console.log("dexVal", dexVal);
-    console.log("threshold", threshold);
-    console.log("total carb: ", totalCarb);
-    console.log("specificItoCFactor: ", specificItoCFactor);
-    console.log("specificISFFactor: ", specificISFFactor);
-
-    console.log("foodUnits: ", foodUnits);
-    console.log("correction: ", correction);
-
-    console.log("added", (Number(foodUnits) + Number(correction)))
 
     totalUnits = String((Number(foodUnits) + Number(correction)).toFixed(2));
 
-    get(`meal${date.getMonth()+1}${date.getDate()}${date.getFullYear()}${meal}metadata`).then((insulinManual) => {
-      if (insulinManual) {
-        console.log(insulinManual)
-        totalUnitsRounded = insulinManual.insulin;
-      }
-      else {
-        totalUnitsRounded = String(Math.round(Number(totalUnits)));
-      }
     }).then(() => {
 
-    console.log("totalUnits: ", totalUnits);
-    console.log("totalUnitsRounded: ", totalUnitsRounded);
-
     setObj(`meal${date.getMonth()+1}${date.getDate()}${date.getFullYear()}${meal}metadata`, {
-      dexVal: dexVal,
+      dexVal: sugarValue,
       totalCarb: totalCarb,
-      insulin: totalUnitsRounded
     })
 
     forceUpdate()
 
-  });
   });
 });
   }
@@ -203,9 +181,42 @@ export default function App() {
 
     const values = [...fields];
     values[i][type] = value;
+
+    get("meals").then(function(result){
+
+    let foods = result;
+
+    let id = `meal${date.getMonth()+1}${date.getDate()}${date.getFullYear()}${meal}`
+
+    for (let i=0; i<foods.length; i++) {
+      if (foods[i]['meal'] == values[i]['meal']) {
+
+        console.log(foods[i])
+
+        if (type === "mainMeal") {
+          console.log("value", value)
+          if (value && !foods[i]['usedMeals'].includes(id)) {
+            foods[i]["usedMeals"].push(id)
+          }
+          else if (!value) {
+            index = foods[i]['usedMeals'].indexOf(id);
+            if (index > -1) {
+              foods[i]['usedMeals'].splice(index, 1);
+            }
+          }
+        }
+
+      }
+    }
+
+    setObj("meals", foods);
     setFields(values);
 
-    setObj(`meal${date.getMonth()+1}${date.getDate()}${date.getFullYear()}${meal}`, values).then(() => calculateInsulin());
+    setObj(id, values).then(() => calculateInsulin());
+
+    console.log("foods", foods)
+    });
+    
         
   }
 
@@ -236,7 +247,6 @@ export default function App() {
       }
 
       get("recipes").then((result) => {
-        console.log("result", result)
         let iterId = meals.length;
         for (let i=0; i<result.length; i++){
           meals.push({id: iterId+1, title: result[i].name});
@@ -249,12 +259,12 @@ export default function App() {
 
           iterId += 1;
         }
-      })
-      
-      console.log("meals", meals);
-      setFilterList(meals);
-      setMealsList(carbFood);
 
+      })
+
+        setFilterList(meals);
+        setMealsList(carbFood);
+        
     });
     
     return filterList;
@@ -366,6 +376,7 @@ export default function App() {
         }
         }
 
+
         return (
           <HStack space="7">
           <View alignItems={'flex-start'}>
@@ -387,7 +398,6 @@ export default function App() {
                 if (item) {
                 setFilterText(item.title);
                 let mealObj = mealsList[item.id-1];
-                console.log(mealObj)
                 let fieldset = fields
                 fieldset[idx]['serving'] = "1"
                 fieldset[idx]['carbs'] = mealObj.carbs
@@ -432,6 +442,26 @@ export default function App() {
               value={field.unit}
             />
           </FormControl>
+
+
+          <HStack alignItems="center" space={8}>
+          <Text fontSize="lg">Main Meal</Text>
+          <Switch
+          isDisabled={mainMealSelected && mainMeal != idx}
+          isChecked={mainMeal == idx || field['mainMeal']}
+          onToggle={(value) => {
+            mainMealSelected = value
+            if (value) {
+              mainMeal = idx
+            }
+            else {
+              mainMeal = undefined
+            }
+            handleChange(idx, "mainMeal", value)
+
+          }}
+           />
+        </HStack>
           </View>
 
           <Button size="lg" colorScheme="error" onPress={() => handleRemove(idx, field)} variant="outline">
@@ -454,6 +484,11 @@ export default function App() {
           </Button>
 
       <View style={{paddingTop: 20, paddingBottom: 20}}>
+       
+        <Text fontSize="lg" style={{textAlign: 'center'}}>
+          Glucose Value: {sugarValue}
+        </Text>
+
         <Text fontSize="lg" style={{textAlign: 'center'}}>
           Food Units: {foodUnits}
         </Text>
@@ -463,27 +498,7 @@ export default function App() {
         <Text fontSize="lg" style={{textAlign: 'center'}}>
           Total Units: {totalUnits}
         </Text>
-        <View style={{ flexDirection:'row' }}>
-        <Text>I'm taking this many units of insulin today: </Text>
-        <TextInput
-              style={styles.input}
-              placeholder={totalUnitsRounded}
-              onChangeText={(e) => {
-                get(`meal${date.getMonth()+1}${date.getDate()}${date.getFullYear()}${meal}metadata`).then((result) => {
-                setObj(`meal${date.getMonth()+1}${date.getDate()}${date.getFullYear()}${meal}metadata`, {
-                  ...result,
-                  insulin: e
-                })
-                }).then(() => {
 
-                get(`meal${date.getMonth()+1}${date.getDate()}${date.getFullYear()}${meal}metadata`).then((result) => {
-                  console.log("INSULIN", result)
-                });
-
-                });
-              }} 
-            />
-            </View>
       </View>
       </VStack>
 
