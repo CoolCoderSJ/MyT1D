@@ -21,12 +21,16 @@ import {
   Typeahead,
   Icon,
   Pressable,
-  Switch
+  Switch,
+  Alert,
+  Collapse
 } from "native-base"
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AutocompleteDropdown } from 'react-native-autocomplete-dropdown'
 import DateTimePicker from '@react-native-community/datetimepicker';
-import ma from 'moving-averages'
+import {
+  ma, dma, ema, sma, wma
+} from 'moving-averages'
 
 const set = async (key, value) => {  try {    await AsyncStorage.setItem(key, value)  } catch (e) {   console.log(e)  } }
 const setObj = async (key, value) => {  try {    const jsonValue = JSON.stringify(value); await AsyncStorage.setItem(key, jsonValue)  } catch (e) {    console.log(e)  } }
@@ -53,6 +57,9 @@ const styles = StyleSheet.create({
 let mainMealSelected = false
 let mainMeal = undefined
 
+let showAlert = false;
+let amount = "";
+
 export default function App() {
   const [, forceUpdate] = React.useReducer(x => x + 1, 0);
 
@@ -74,6 +81,75 @@ export default function App() {
     get(`meal${date.getMonth()+1}${date.getDate()}${date.getFullYear()}${meal}`).then((result) => {
       if (result) {
       setFields(result);
+
+      console.log(result)
+      for (let a=0; a<result.length; a++) {
+        console.log(result[a])
+        get("meals").then((foods) => {
+          console.log("fetched foods ", foods)
+          if (foods) {
+            for (let b=0; b<foods.length; b++) {
+              console.log(foods[b])
+              if (foods[b].meal == result[a].meal && result[a].mainMeal) {
+                let mealMap = {
+                  "Breakfast": "Lunch",
+                  "Lunch": "PMSnack",
+                  "PMSnack": "Dinner",
+                  "Dinner": "NightSnack",
+                  "NightSnack": "Breakfast",
+                }
+    
+                let sugarValueList = [];
+    
+                for (let j=0; j < foods[b]['usedMeals'].length; j++) {
+                  let usedMealId = foods[b]['usedMeals'][j];
+                  let usedMealName = usedMealId.split("meal")[1].replace(/[0-9]/g, '');
+                  let restOfTheId = usedMealId.split(usedMealName)[0];
+    
+                  let nextId = `${restOfTheId}${mealMap[usedMealName]}`;
+    
+                  console.log(usedMealId, nextId)
+    
+                  get(`${nextId}metadata`)
+                  .then((result) => {
+                    if (result) {
+                      if (result.dexVal) {
+                      sugarValueList.push(result.dexVal)
+                      }
+                      else {
+                        sugarValueList.push(0)
+                      }
+                    }
+                    else {
+                      sugarValueList.push(0)
+                    }
+                    console.log(sugarValueList)
+                  })
+                  .then(() => {
+                    console.log("starting weighted averages, sugarValueList ", sugarValueList)
+                    let averages = ma(sugarValueList, sugarValueList.length);
+                    let prediction = averages[sugarValueList.length-1];
+        
+                    if (prediction > 100) {
+                      amount = `${prediction} higher`
+                    }
+        
+                    else {
+                      amount = `${prediction} lower`
+                    }
+        
+                    showAlert = true;
+        
+                  })
+    
+                }
+              }
+            }
+          }
+        });
+
+      }
+
       calculateInsulin();
       }
     })
@@ -199,10 +275,67 @@ export default function App() {
             foods[i]["usedMeals"].push(id)
           }
           else if (!value) {
-            index = foods[i]['usedMeals'].indexOf(id);
+            let index = foods[i]['usedMeals'].indexOf(id);
             if (index > -1) {
               foods[i]['usedMeals'].splice(index, 1);
+              showAlert = false;
             }
+          }
+
+          if (value) {
+            let mealMap = {
+              "Breakfast": "Lunch",
+              "Lunch": "PMSnack",
+              "PMSnack": "Dinner",
+              "Dinner": "NightSnack",
+              "NightSnack": "Breakfast",
+            }
+
+            let sugarValueList = [];
+
+            for (let j=0; j < foods[i]['usedMeals'].length; j++) {
+              let usedMealId = foods[i]['usedMeals'][j];
+              let usedMealName = usedMealId.split("meal")[1].replace(/[0-9]/g, '');
+              let restOfTheId = usedMealId.split(usedMealName)[0];
+
+              let nextId = `${restOfTheId}${mealMap[usedMealName]}`;
+
+              console.log(usedMealId, nextId)
+
+              get(`${nextId}metadata`)
+              .then((result) => {
+                if (result) {
+                  if (result.dexVal) {
+                  sugarValueList.push(result.dexVal)
+                  }
+                  else {
+                    sugarValueList.push(0)
+                  }
+                }
+                else {
+                  sugarValueList.push(0)
+                }
+                console.log(sugarValueList)
+              })
+              .then(() => {
+                console.log("starting weighted averages, sugarValueList ", sugarValueList)
+                let averages = ma(sugarValueList, sugarValueList.length);
+                let prediction = averages[sugarValueList.length-1];
+    
+                if (prediction > 100) {
+                  amount = `${prediction} higher`
+                }
+    
+                else {
+                  amount = `${prediction} lower`
+                }
+    
+                showAlert = true;
+    
+              })
+
+            }
+          
           }
         }
 
@@ -335,15 +468,7 @@ export default function App() {
           onChange={(e, selectedDate) => {
             setDate(selectedDate || date);
             setShow(false);
-            get(`meal${date.getMonth()+1}${date.getDate()}${date.getFullYear()}${meal}`).then((result) => {
-              if (result) {
-              setFields(result);
-              calculateInsulin()
-              }
-              else {
-                setFields([{}])
-              }
-            })
+            fetchMeals();
           }}
         />
       )}
@@ -381,6 +506,22 @@ export default function App() {
           <HStack space="7">
           <View alignItems={'flex-start'}>
             <FormControl key={`${field}-${idx}`}>
+
+            <Collapse isOpen={showAlert}>
+            <Alert w="100%" status={"info"}>
+            <VStack space={2} flexShrink={1} w="100%">
+              <HStack flexShrink={1} space={2} justifyContent="space-between">
+                <HStack space={2} flexShrink={1}>
+                  <Alert.Icon mt="1" />
+                  <Text fontSize="md" color="coolGray.800">
+                    Your sugar level went ~{amount} when previously eating this meal.
+                  </Text>
+                </HStack>
+              </HStack>
+            </VStack>
+          </Alert>
+          </Collapse>
+
 
             <FormControl.Label>Meal</FormControl.Label>
 
