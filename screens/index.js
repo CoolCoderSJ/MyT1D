@@ -26,7 +26,6 @@ import axios from 'axios';
 import HomeScreen from '../screens/home';
 import MealsScreen from '../screens/foods';
 import InsulinScreen from '../screens/insulin';
-import DexcomScreen from '../screens/dexcom';
 import RecipesScreen from '../screens/recipes';
 import SettingsScreen from '../screens/settings';
 
@@ -45,7 +44,7 @@ const getIcon = (screenName) => {
   switch (screenName) {
     case 'Home':
       return 'home-outline';
-    case 'Meals':
+    case 'Ingredients':
       return 'nutrition-outline';
     case 'Insulin':
       return 'pencil-outline';
@@ -114,9 +113,8 @@ function MyDrawer() {
       <Drawer.Navigator
         drawerContent={(props) => <CustomDrawerContent {...props} />}>
         <Drawer.Screen name="Home" component={HomeScreen} />
-        <Drawer.Screen name="Meals" component={MealsScreen} />
+        <Drawer.Screen name="Ingredients" component={MealsScreen} />
         <Drawer.Screen name="Insulin" component={InsulinScreen} />
-        <Drawer.Screen name="Dexcom" component={DexcomScreen} />
         <Drawer.Screen name="Recipes" component={RecipesScreen} />
         <Drawer.Screen name="Settings" component={SettingsScreen} />
       </Drawer.Navigator>

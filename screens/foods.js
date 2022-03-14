@@ -133,7 +133,7 @@ export default function App() {
           <View alignItems={'flex-start'}>
             <FormControl key={`${field}-${idx}`}>
             <TextInput
-              placeholder="Meal name"
+              placeholder="Ingredient name"
               style={styles.input}
               onChangeText={e => handleChange(idx, "meal", e)}
               value={field.meal}
