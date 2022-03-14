@@ -147,7 +147,7 @@ export default function App() {
       }
       else {
         console.log("Meal not found in database, setting fields to empty")
-        setFields([{}])
+        setFields([{ }])
       }
     })
 
@@ -258,6 +258,7 @@ export default function App() {
 
 
   function handleChange(i, type, value) {
+
 
     console.log("handleChange", i, type, value);
     if (value == null || value == undefined) {
@@ -512,21 +513,6 @@ export default function App() {
                       }
                     }
 
-                    let mealId = "1";
-
-
-                    for (let i = 0; i < filterList.length; i++) {
-                      if (filterList[i].title.toLowerCase() == mealTitle.toLowerCase() && filterList[i].id != "1") {
-                        mealId = String(i + 1);
-                      }
-                    }
-
-                    if (mealId === NaN) {
-                      filterList.push(mealTitle);
-                      mealId = filterList.length - 1;
-                    }
-
-
                     return (
                       <HStack space="7">
                         <View alignItems={'flex-start'}>
@@ -551,7 +537,10 @@ export default function App() {
                             <FormControl.Label>Meal</FormControl.Label>
 
                             <AutocompleteDropdown
-                              initialValue={{ id: mealId }}
+                              textInputProps={{
+                                "value": mealTitle,
+                              }}
+                              showClear={true}
                               clearOnFocus={false}
                               closeOnBlur={false}
                               closeOnSubmit={true}
