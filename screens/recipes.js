@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
   });
 
 let recipeId = NaN;
-let recipes = [ ];
+let recipes = [];
 
 get("recipes").then((result) => {
     if (result) {
@@ -337,22 +337,26 @@ export default function App() {
           </FormControl>
           </View>
           <Button size="lg" colorScheme="error" onPress={() => handleRemove(idx, field)} variant="outline">
+          <Pressable onPress={handleRemove(idx, field)}>
           <Icon
             color='error.500'
             size="8"
             as={<Ionicons name="trash-outline" />}
           />
+          </Pressable>
           </Button>
           </HStack>
         );
       })}
 
       <Button size="lg" colorScheme="indigo" onPress={handleAdd} variant="outline">
+      <Pressable onPress={handleAdd}>
       <Icon
             color='primary.500'
             size="8"
             as={<Ionicons name="add-outline" />}
           />
+          </Pressable>
           </Button>
 
       <View style={{paddingTop: 20, paddingBottom: 20}}>
