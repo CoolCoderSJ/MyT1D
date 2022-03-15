@@ -146,6 +146,8 @@ export default function App() {
         calculateInsulin();
       }
       else {
+        showAlert = false;
+        mainMeal = undefined;
         console.log("Meal not found in database, setting fields to empty")
         setFields([{ }])
       }
@@ -621,11 +623,13 @@ export default function App() {
                   })}
 
                   <Button size="lg" colorScheme="indigo" onPress={handleAdd} variant="outline">
+                  <Pressable onPress={handleAdd}>
                     <Icon
                       color='primary.500'
                       size="8"
                       as={<Ionicons name="add-outline" />}
                     />
+                  </Pressable>
                   </Button>
 
                   <View style={{ paddingTop: 20, paddingBottom: 20 }}>
