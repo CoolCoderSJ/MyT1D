@@ -37,82 +37,92 @@ const get = async (key) => {  try {    const value = await AsyncStorage.getItem(
 const getAll = async () => { try { const keys = await AsyncStorage.getAllKeys(); return keys } catch (error) { console.error(error) }}
 
 
-let foods = 0;
-let recipeCount = 0;
-let sugarValues = []
-
-get("meals").then(function(result){
-  if (result) {
-  foods = result.length;
-  }
-  else {
-    foods = 0;
-  }
-});
-
-
-get("recipes").then(function(result){
-  if (result) {
-  recipeCount = result.length;
-  }
-  else {
-    recipeCount = 0;
-  }
-});
-
-
-let first_value = "Loading..."
-let readings = []
-let rotation_factor = 180
-let showSingleArrow = false
-let showDoubleArrow = false
-let readingValues = []
-
-
-get("readings")
-  .then(result => {
-    readings = result
-    first_value = readings[0].value
-
-    let trend = readings[0].trend
-
-    switch (trend) {
-      case "DoubleUp":      {rotation_factor = 90;  showDoubleArrow = true;  showSingleArrow = true;  break }
-      case "SingleUp":      {rotation_factor = 90;  showDoubleArrow = false; showSingleArrow = true;  break }
-      case "FortyFiveUp":   {rotation_factor = 135; showDoubleArrow = false; showSingleArrow = true;  break }
-      case "Flat":          {rotation_factor = 180; showDoubleArrow = false; showSingleArrow = true;  break }
-      case "FortyFiveDown": {rotation_factor = 225; showDoubleArrow = false; showSingleArrow = true;  break }
-      case "SingleDown":    {rotation_factor = 270; showDoubleArrow = false; showSingleArrow = true;  break }
-      case "DoubleDown":    {rotation_factor = 270; showDoubleArrow = true;  showSingleArrow = true;  break }
-      default:              {                       showDoubleArrow = false; showSingleArrow = false; break }
-    }
-
-    readingValues = []
-    for (let i=0; i<readings.length; i++) {
-      readingValues.push(readings[i].value)
-    }
-  })
-
-getAll().then(function(result){
-  console.log("All keys: ", result)
-
-  for (let i=0; i<result.length; i++) {
-    if (result[i].includes("meal") && !result[i].includes("metadata") && result != "meals") {
-      console.log("getting metadata for ", result[i])
-      get(result[i]+"metadata").then(function(meta){
-        console.log("Sugar value ", meta.dexVal)
-        sugarValues.push(meta.dexVal)
-      });
-    }
-  }
-
-  console.log("All sugar values: " + sugarValues)
-
-});
-
 function Home() {
   const [, forceUpdate] = React.useReducer(x => x + 1, 0);
 
+  const [foods, setFoods] = React.useState(0);
+  const [recipeCount, setRecipeCount] = React.useState(0);
+  const [sugarValues, setSugarValues] = React.useState([]);
+  const [first_value, setFirstValue] = React.useState("Loading...");
+  const [rotation_factor, setRotationFactor] = React.useState(180);
+  const [showSingleArrow, setShowSingleArrow] = React.useState(false);
+  const [showDoubleArrow, setShowDoubleArrow] = React.useState(false);
+  const [readingValues, setReadingValues] = React.useState([0, 0]);
+
+  
+  React.useMemo(() => {
+    console.log("loading data")
+  
+    get("meals").then(function(result){
+      if (result) {
+      setFoods(result.length);
+      }
+      else {
+        setFoods(0);
+      }
+    });
+    
+    
+    get("recipes").then(function(result){
+      if (result) {
+      setRecipeCount(result.length);
+      }
+      else {
+        setRecipeCount(0);
+      }
+    });
+    
+    
+    
+    get("readings")
+      .then(result => {
+        let readings = result
+        setFirstValue(readings[0].value)
+    
+        let trend = readings[0].trend
+    
+        switch (trend) {
+          case "DoubleUp":      {setRotationFactor(90);  setShowDoubleArrow(true);  setShowSingleArrow(true);  break }
+          case "SingleUp":      {setRotationFactor(90);  setShowDoubleArrow(false); setShowSingleArrow(true);  break }
+          case "FortyFiveUp":   {setRotationFactor(135); setShowDoubleArrow(false); setShowSingleArrow(true);  break }
+          case "Flat":          {setRotationFactor(180); setShowDoubleArrow(false); setShowSingleArrow(true);  break }
+          case "FortyFiveDown": {setRotationFactor(225); setShowDoubleArrow(false); setShowSingleArrow(true);  break }
+          case "SingleDown":    {setRotationFactor(270); setShowDoubleArrow(false); setShowSingleArrow(true);  break }
+          case "DoubleDown":    {setRotationFactor(270); setShowDoubleArrow(true);  setShowSingleArrow(true);  break }
+          default:              {                        setShowDoubleArrow(false); setShowSingleArrow(false); break }
+        }
+    
+        let rValues = []
+        for (let i=0; i<readings.length; i++) {
+          rValues.push(readings[i].value)
+        }
+
+        setReadingValues(rValues)
+      })
+    
+    getAll().then(function(result){
+      console.log("All keys: ", result)
+    
+      let sValues = [];
+      for (let i=0; i<result.length; i++) {
+        if (result[i].includes("meal") && !result[i].includes("metadata") && result != "meals") {
+          console.log("getting metadata for ", result[i])
+          get(result[i]+"metadata").then(function(meta){
+            console.log("Sugar value ", meta.dexVal)
+            sValues.push(meta.dexVal)
+          });
+        }
+      }
+
+      setSugarValues(sValues)
+    
+      console.log("All sugar values: " + sugarValues)
+    });
+    
+    forceUpdate();
+    }, []);
+
+    
   return (
     <Center flex={1} px="3">
 

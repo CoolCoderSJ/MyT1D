@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
   });
 
 let recipeId = NaN;
-let recipes = [{ name: "", meals: [] }];
+let recipes = [ ];
 
 get("recipes").then((result) => {
     if (result) {
