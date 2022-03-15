@@ -29,6 +29,7 @@ import {
 import Arrow from 'react-native-arrow';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
 
 
 const set = async (key, value) => {  try {    await AsyncStorage.setItem(key, value)  } catch (e) {   console.log(e)  } }
@@ -38,6 +39,7 @@ const getAll = async () => { try { const keys = await AsyncStorage.getAllKeys();
 
 
 function Home() {
+  const navigation = useNavigation();
   const [, forceUpdate] = React.useReducer(x => x + 1, 0);
 
   const [foods, setFoods] = React.useState(0);
@@ -49,8 +51,8 @@ function Home() {
   const [showDoubleArrow, setShowDoubleArrow] = React.useState(false);
   const [readingValues, setReadingValues] = React.useState([0, 0]);
 
-  
-  React.useMemo(() => {
+  React.useEffect(() => {
+    const refreshData = navigation.addListener('focus', () => {
     console.log("loading data")
   
     get("meals").then(function(result){
@@ -120,7 +122,9 @@ function Home() {
     });
     
     forceUpdate();
-    }, []);
+  });
+  return refreshData;
+    }, [navigation]);
 
     
   return (
