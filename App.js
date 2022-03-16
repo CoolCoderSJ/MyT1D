@@ -94,6 +94,14 @@ const Login = ({ navigation }) => {
   })
   };
 
+  const testModeActivate = () => {
+      setObj("login", {
+        username: "testDemo",
+        password: "password"
+      })
+      navigation.navigate('Home')
+  };
+
   return (
     <Center flex={1} px="3">
     <Box safeArea p="2" py="8" w="90%" maxW="290">
@@ -147,6 +155,11 @@ const Login = ({ navigation }) => {
 
         <Button mt="2" colorScheme="indigo" onPress={onLogin}>
           Sign in
+        </Button>
+
+
+        <Button mt="2" colorScheme="indigo" onPress={testModeActivate}>
+          Test Mode
         </Button>
       </VStack>
     </Box>
