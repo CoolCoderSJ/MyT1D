@@ -26,6 +26,8 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AutocompleteDropdown } from 'react-native-autocomplete-dropdown'
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useNavigation } from '@react-navigation/native';
+
 
 const set = async (key, value) => {  try {    await AsyncStorage.setItem(key, value)  } catch (e) {   console.log(e)  } }
 const setObj = async (key, value) => {  try {    const jsonValue = JSON.stringify(value); await AsyncStorage.setItem(key, jsonValue)  } catch (e) {    console.log(e)  } }
@@ -51,6 +53,8 @@ get("recipes").then((result) => {
 })
 
 export default function App() {
+  const navigation = useNavigation();
+
   const [, forceUpdate] = React.useReducer(x => x + 1, 0);
 
   const [filterList, setFilterList] = React.useState([]);
@@ -121,46 +125,53 @@ export default function App() {
     calculateCarbs()
   }
 
-
-  React.useMemo(() => {
-    let meals = [];
-    let carbFood = [];
-    
-    get("meals").then(function(result){
-      for (let i=0; i<Object.keys(result).length; i++){
-        meals.push({id: i+1, title: result[String(i)].meal});
-
-        carbFood.push(result[String(i)]);
-      }
-
-      get("recipes").then((result) => {
-        for (let i=meals.length; i<Object.keys(result).length+1; i++){
-          meals.push({id: i+1, title: result[i-1].name});
-
-          carbFood.push({
-            meal: result[i-1].name,
-            carbs: String((Number(result[i-1].carbs)/Number(result[i-1].serving)).toFixed()),
-            unit: result[i-1].unit
-          });
+  React.useEffect(() => {
+    const setDropDownList = () => {
+      let meals = [];
+      let carbFood = [];
+      
+      get("meals").then(function(result){
+        for (let i=0; i<Object.keys(result).length; i++){
+          meals.push({id: i+1, title: result[String(i)].meal});
+  
+          carbFood.push(result[String(i)]);
         }
+  
+        get("recipes").then((result) => {
+          for (let i=meals.length; i<Object.keys(result).length+1; i++){
+            meals.push({id: i+1, title: result[i-1].name});
+  
+            carbFood.push({
+              meal: result[i-1].name,
+              carbs: String((Number(result[i-1].carbs)/Number(result[i-1].serving)).toFixed()),
+              unit: result[i-1].unit
+            });
+          }
+  
+          console.log("meals", meals);
+          setFilterList(meals);
+          setMealsList(carbFood);
+        })
+  
+      calculateCarbs()
+  
+      });
+  
+    };
 
-        console.log("meals", meals);
-        setFilterList(meals);
-        setMealsList(carbFood);
-      })
-
-    calculateCarbs()
-
-    });
-
-  }, []);
+    const refreshData = navigation.addListener('focus', () => {
+      setDropDownList();
+      setShowMealEditor(false);
+    })
+    return refreshData;
+  }, [navigation]);
 
   function calculateCarbs() {
       let totalcarbs = 0;
         for (let i=0; i<fields.length; i++) {
             console.log("fields", fields[i]);
             if (fields[i].carbs) {
-                totalcarbs += fields[i].carbs;
+                totalcarbs += Number(fields[i].carbs);
             }
         }
         recipes[recipeId]['carbs'] = totalcarbs;
@@ -196,13 +207,14 @@ export default function App() {
     </HStack>
             )
      })}
-     <Button size="lg" colorScheme="indigo" onPress={() => {recipeId = recipes.length; fetchMeals();}} variant="outline">
-      <Icon
-            color='primary.500'
-            size="8"
-            as={<Ionicons name="add-outline" />}
-          />
-          </Button>
+          <Button leftIcon={<Icon
+                      color='white'
+                      size="8"
+                      as={<Ionicons name="add-outline" />}
+                    />}
+
+                    onPress={() => {recipeId = recipes.length; fetchMeals();}}
+                    >Add New</Button>
      </VStack>
      }
 
@@ -272,7 +284,6 @@ export default function App() {
         }
 
         return (
-          <HStack space="7">
           <View alignItems={'flex-start'}>
             <FormControl key={`${field}-${idx}`}>
 
@@ -282,27 +293,42 @@ export default function App() {
               textInputProps={{
                 "value": mealTitle,
               }}
+              showClear={true}
               clearOnFocus={false}
               closeOnBlur={false}
               closeOnSubmit={true}
               dataSet={filterList}
               onChangeText={e => handleChange(idx, "meal", e)}
-              onClear={() => handleChange(idx, "meal", "")}
+              onClear={() => handleRemove(idx)}
               onSelectItem={(item) => {
                 if (item) {
-                let mealObj = mealsList[item.id-1];
-                let fieldset = fields
-                fieldset[idx]['serving'] = "1"
-                fieldset[idx]['carbs'] = mealObj.carbs
-                fieldset[idx]['unit'] = mealObj.unit
-                setFields(fieldset)
-                let servingSize = servingSizes;
-                servingSize[idx] = mealObj.carbs;
-                setServingSizes(servingSize)
+
+                  let mealObj = undefined;
+
+                  for (let i=0; i<mealsList.length; i++) {
+                    console.log("in loop ", mealsList[i], item.title);
+                    if (mealsList[i].meal === item.title) {
+                      console.log("found meal")
+                      mealObj = mealsList[i]
+                      console.log("mealObj", mealObj)
+                      let fieldset = fields
+                      fieldset[idx]['serving'] = "1"
+                      fieldset[idx]['carbs'] = mealObj.carbs
+                      fieldset[idx]['unit'] = mealObj.unit
+                      setFields(fieldset)
+                      let servingSize = servingSizes;
+                      servingSize[idx] = mealObj.carbs;
+                      setServingSizes(servingSize)
+                    }
+                  }
+
+                  if (!mealObj) {
+                    return
+                  }
+
+                  handleChange(idx, "meal", item);
                 }
-                handleChange(idx, "meal", item);
-                }
-              }
+              }}
             />
 
             <FormControl.Label>Serving Amount (1, 0.75, 0.5, etc.)</FormControl.Label>
@@ -336,28 +362,17 @@ export default function App() {
             />
           </FormControl>
           </View>
-          <Button size="lg" colorScheme="error" onPress={() => handleRemove(idx, field)} variant="outline">
-          <Pressable onPress={handleRemove(idx, field)}>
-          <Icon
-            color='error.500'
-            size="8"
-            as={<Ionicons name="trash-outline" />}
-          />
-          </Pressable>
-          </Button>
-          </HStack>
         );
       })}
 
-      <Button size="lg" colorScheme="indigo" onPress={handleAdd} variant="outline">
-      <Pressable onPress={handleAdd}>
-      <Icon
-            color='primary.500'
-            size="8"
-            as={<Ionicons name="add-outline" />}
-          />
-          </Pressable>
-          </Button>
+      <Button leftIcon={<Icon
+                      color='white'
+                      size="8"
+                      as={<Ionicons name="add-outline" />}
+                    />}
+
+                    onPress={handleAdd}
+                    >Add New</Button>
 
       <View style={{paddingTop: 20, paddingBottom: 20}}>
       <Text fontSize="lg" style={{textAlign: 'center'}}>Total Carbs: {recipes[recipeId]['carbs']}</Text>

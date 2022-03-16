@@ -21,6 +21,7 @@ import {
   View
 } from "native-base";
 import { Dimensions, StyleSheet, TextInput } from "react-native";
+import { useNavigation } from '@react-navigation/native';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -33,6 +34,8 @@ const get = async (key) => {  try {    const value = await AsyncStorage.getItem(
 console.disableYellowBox = true;
 
 const Settings = () => {
+  const navigation = useNavigation();
+
   const [savedSettings, setSettings] = React.useState({});
 
   const [showitoc, setShowitoc] = React.useState(false);
@@ -42,6 +45,14 @@ const Settings = () => {
   const handleToggleisf = () => setShowisf(!showisf);
 
   const [showAlert, setShowAlert] = React.useState(false);
+
+  React.useEffect(() => {
+    const refreshData = navigation.addListener('focus', () => {
+      setShowAlert(false)
+    });
+
+    return refreshData;
+  }, [navigation]);
 
   React.useEffect(() => {
   get("factors")

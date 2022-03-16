@@ -37,6 +37,7 @@ const setObj = async (key, value) => {  try {    const jsonValue = JSON.stringif
 const get = async (key) => {  try {    const value = await AsyncStorage.getItem(key); if(value !== null) { try {return JSON.parse(value)} catch {return value} }  } catch(e) {    console.log(e)  }}
 const getAll = async () => { try { const keys = await AsyncStorage.getAllKeys(); return keys } catch (error) { console.error(error) }}
 
+let sugarValues = 0;
 
 function Home() {
   const navigation = useNavigation();
@@ -44,7 +45,6 @@ function Home() {
 
   const [foods, setFoods] = React.useState(0);
   const [recipeCount, setRecipeCount] = React.useState(0);
-  const [sugarValues, setSugarValues] = React.useState([]);
   const [first_value, setFirstValue] = React.useState("Loading...");
   const [rotation_factor, setRotationFactor] = React.useState(180);
   const [showSingleArrow, setShowSingleArrow] = React.useState(false);
@@ -99,7 +99,7 @@ function Home() {
           rValues.push(readings[i].value)
         }
 
-        setReadingValues(rValues)
+        setReadingValues(rValues.reverse())
       })
     
     getAll().then(function(result){
@@ -110,15 +110,19 @@ function Home() {
         if (result[i].includes("meal") && !result[i].includes("metadata") && result != "meals") {
           console.log("getting metadata for ", result[i])
           get(result[i]+"metadata").then(function(meta){
+            if (meta.dexVal) {
             console.log("Sugar value ", meta.dexVal)
             sValues.push(meta.dexVal)
+
+            console.log(sValues)
+            sugarValues = sValues[0];
+    
+            console.log("All sugar values: " + sugarValues)
+            forceUpdate()
+            }
           });
         }
       }
-
-      setSugarValues(sValues)
-    
-      console.log("All sugar values: " + sugarValues)
     });
     
     forceUpdate();
@@ -146,7 +150,7 @@ function Home() {
     </Text>
     </Text>
 
-    <Text pb="4" color="primary.500" fontSize="xl" style={{textAlign: 'center'}}>Sugar At Last Recorded Meal- <Text color="warning.800">{sugarValues[0]}</Text></Text>
+    <Text pb="4" color="primary.500" fontSize="xl" style={{textAlign: 'center'}}>Sugar At Last Recorded Meal- <Text color="warning.800">{sugarValues}</Text></Text>
 
     <Text fontSize="md" style={{textAlign: 'center'}}>mg/dl over the past 2 hours-</Text>
 
@@ -157,7 +161,7 @@ function Home() {
           labels: ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
           datasets: [
             {
-              data: readingValues.reverse()
+              data: readingValues
             }
           ]
         }}

@@ -19,7 +19,8 @@ import {
   View,
   Hidden,
   ScrollView,
-  Icon
+  Icon,
+  Pressable
 } from "native-base"
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -162,16 +163,19 @@ export default function App() {
             as={<Ionicons name="trash-outline" />}
           />
           </Button>
+          
           </HStack>
         );
       })}
-      <Button size="lg" colorScheme="indigo" onPress={handleAdd} variant="outline">
-      <Icon
-            color='primary.500'
-            size="8"
-            as={<Ionicons name="add-outline" />}
-          />
-          </Button>
+      
+      <Button leftIcon={<Icon
+                      color='white'
+                      size="8"
+                      as={<Ionicons name="add-outline" />}
+                    />}
+
+                    onPress={handleAdd}
+                    >Add New</Button>
       </VStack>
       </Box>
   </Center>

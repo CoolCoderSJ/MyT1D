@@ -23,7 +23,8 @@ import {
   Pressable,
   Switch,
   Alert,
-  Collapse
+  Collapse,
+  IconButton
 } from "native-base"
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AutocompleteDropdown } from 'react-native-autocomplete-dropdown'
@@ -31,6 +32,8 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import {
   ma, dma, ema, sma, wma
 } from 'moving-averages'
+import { useNavigation } from '@react-navigation/native';
+
 
 const set = async (key, value) => { try { await AsyncStorage.setItem(key, value) } catch (e) { console.log(e) } }
 const setObj = async (key, value) => { try { const jsonValue = JSON.stringify(value); await AsyncStorage.setItem(key, jsonValue) } catch (e) { console.log(e) } }
@@ -43,6 +46,7 @@ let meal = "";
 let factors = {};
 let readings = [];
 let sugarValue = 0;
+let totalCarb = 0;
 
 const styles = StyleSheet.create({
   input: {
@@ -63,6 +67,8 @@ let amount = "";
 let settingsMissing = false;
 
 export default function App() {
+  const navigation = useNavigation();
+
   const [, forceUpdate] = React.useReducer(x => x + 1, 0);
 
   const [fields, setFields] = React.useState([{}]);
@@ -120,7 +126,7 @@ export default function App() {
                       })
                       .then(() => {
 
-                        if (sugarValueList) {
+                        if (sugarValueList && sugarValueList.length > 0) {
                           let averages = ma(sugarValueList, sugarValueList.length);
                           let prediction = averages[sugarValueList.length - 1];
 
@@ -133,6 +139,7 @@ export default function App() {
                           }
 
                           showAlert = true;
+                          mainMealSelected = true;
                         }
                       })
                   }
@@ -148,6 +155,8 @@ export default function App() {
       else {
         showAlert = false;
         mainMeal = undefined;
+        mainMealSelected = false;
+        totalCarb = 0;
         console.log("Meal not found in database, setting fields to empty")
         setFields([{ }])
       }
@@ -194,8 +203,7 @@ export default function App() {
         settingsMissing = true;
       }
 
-      let totalCarb = 0;
-
+      totalCarb = 0;
       for (let i = 0; i < values.length; i++) {
         if (values[i].carbs) {
           totalCarb += Number(values[i].carbs);
@@ -269,12 +277,11 @@ export default function App() {
 
     const values = [...fields];
 
-    if (value) {
       if (type === "meal") {
         value = value.title;
       }
       values[i][type] = value;
-    }
+    
 
 
     get("meals").then(function (result) {
@@ -326,7 +333,7 @@ export default function App() {
                     }
                   })
                   .then(() => {
-                    if (sugarValueList) {
+                    if (sugarValueList && sugarValueList.length > 0) {
                       let averages = ma(sugarValueList, sugarValueList.length);
                       let prediction = averages[sugarValueList.length - 1];
 
@@ -377,44 +384,49 @@ export default function App() {
   }
 
 
-  React.useMemo(() => {
-    let meals = [{
-      id: "1",
-      title: ""
-    }];
-    let carbFood = [];
-
-    get("meals").then(function (result) {
-      console.log("meals RESULT --> ", result);
-      for (let i = 0; i < Object.keys(result).length; i++) {
-        meals.push({ id: String(i + 2), title: result[String(i)].meal });
-
-        carbFood.push(result[String(i)]);
-      }
-
-      get("recipes").then((result) => {
-        let iterId = meals.length;
-        for (let i = 0; i < result.length; i++) {
-          meals.push({ id: String(iterId + 2), title: result[i].name });
-
-          carbFood.push({
-            meal: result[i].name,
-            carbs: String((Number(result[i].carbs) / Number(result[i].serving)).toFixed()),
-            unit: result[i].unit
-          });
-
-          iterId += 1;
+  React.useEffect(() => {
+    const setDropDownListData = () => {
+      let meals = [ ];
+      let carbFood = [];
+  
+      get("meals").then(function (result) {
+        console.log("meals RESULT --> ", result);
+        for (let i = 0; i < Object.keys(result).length; i++) {
+          meals.push({ id: String(i + 2), title: result[String(i)].meal });
+  
+          carbFood.push(result[String(i)]);
         }
+  
+        get("recipes").then((result) => {
+          let iterId = meals.length;
+          for (let i = 0; i < result.length; i++) {
+            meals.push({ id: String(iterId + 2), title: result[i].name });
+  
+            carbFood.push({
+              meal: result[i].name,
+              carbs: String((Number(result[i].carbs) / Number(result[i].serving)).toFixed()),
+              unit: result[i].unit
+            });
+  
+            iterId += 1;
+          }
+  
+        })
+  
+        setFilterList(meals);
+        setMealsList(carbFood);
+  
+      });
+      // console.log("filter list --> ", filterList);
+      return filterList;
+    }
 
-      })
-
-      setFilterList(meals);
-      setMealsList(carbFood);
-
-    });
-    // console.log("filter list --> ", filterList);
-    return filterList;
-  }, [filterText]);
+    const refreshData = navigation.addListener('focus', () => {
+      setDropDownListData();
+      setShowInsulinEditor(false);
+    })
+    return refreshData;
+  }, [navigation]);
 
 
 
@@ -515,6 +527,8 @@ export default function App() {
                       }
                     }
 
+                    console.log("main meal ", mainMeal, idx)
+
                     return (
                       <HStack space="7">
                         <View alignItems={'flex-start'}>
@@ -550,19 +564,33 @@ export default function App() {
                               onChangeText={e => handleChange(idx, "meal", e)}
                               onClear={() => handleRemove(idx)}
                               onSelectItem={(item) => {
-                                if (item && Number(item.id) > 1) {
-                                  setFilterText(item.title);
-                                  let mealObj = mealsList[item.id - 2];
-                                  let fieldset = fields
-                                  fieldset[idx]['serving'] = "1"
-                                  fieldset[idx]['carbs'] = mealObj.carbs
-                                  fieldset[idx]['unit'] = mealObj.unit
-                                  setFields(fieldset)
-                                  let servingSize = servingSizes;
-                                  servingSize[idx] = mealObj.carbs;
-                                  setServingSizes(servingSize)
+                                if (item) {
+
+                                  let mealObj = undefined;
+                                  
+                                  for (let i=0; i<mealsList.length; i++) {
+                                    console.log("in loop ", mealsList[i], item.title);
+                                    if (mealsList[i].meal === item.title) {
+                                      console.log("found meal")
+                                      mealObj = mealsList[i]
+                                      console.log("mealObj", mealObj)
+                                      let fieldset = fields
+                                      fieldset[idx]['serving'] = "1"
+                                      fieldset[idx]['carbs'] = mealObj.carbs
+                                      fieldset[idx]['unit'] = mealObj.unit
+                                      setFields(fieldset)
+                                      let servingSize = servingSizes;
+                                      servingSize[idx] = mealObj.carbs;
+                                      setServingSizes(servingSize)
+                                    }
+                                  }
+                
+                                  if (!mealObj) {
+                                    return
+                                  }
+                
+                                  handleChange(idx, "meal", item);
                                 }
-                                handleChange(idx, "meal", item);
                               }
                               }
                             />
@@ -622,15 +650,15 @@ export default function App() {
                     );
                   })}
 
-                  <Button size="lg" colorScheme="indigo" onPress={handleAdd} variant="outline">
-                  <Pressable onPress={handleAdd}>
-                    <Icon
-                      color='primary.500'
+                  <Button leftIcon={<Icon
+                      color='white'
                       size="8"
                       as={<Ionicons name="add-outline" />}
-                    />
-                  </Pressable>
-                  </Button>
+                    />}
+
+                    onPress={handleAdd}
+                    >Add New</Button>
+
 
                   <View style={{ paddingTop: 20, paddingBottom: 20 }}>
                     <Collapse isOpen={settingsMissing}>
@@ -650,6 +678,10 @@ export default function App() {
 
                     <Text fontSize="lg" style={{ textAlign: 'center' }}>
                       Glucose Value: {sugarValue}
+                    </Text>
+
+                    <Text fontSize="lg" style={{ textAlign: 'center' }}>
+                      Total Carbs: {totalCarb}
                     </Text>
 
                     <Text fontSize="lg" style={{ textAlign: 'center' }} color={foodUnits == "Not Available" ? "#ff0000" : "#000000"}>
