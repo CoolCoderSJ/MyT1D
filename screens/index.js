@@ -137,6 +137,32 @@ export default function App() {
         password: loginInfo.password
     })
 
+    if (data.username == "testDemo" && data.password == "password") {
+
+      function getRandom(min, max) {
+        return Math.random() * (max - min) + min;
+      }
+
+      let readings = [];
+      let trends = ['DoubleUp', 'SingleUp', 'FortyFiveUp', 'Flat', 'FortyFiveDown', 'SingleDown', 'DoubleDown']
+
+      for (let i=0; i<24; i++) {
+        readings.push(
+          {
+            value: Math.round(getRandom(100, 150)),
+            trend: trends[Math.round(getRandom(0, 6))]
+          }
+          )
+      }
+
+      console.log("readings", readings)
+      setObj("readings", readings)
+      .then(() => isLoading = false)
+
+    }
+
+    else {
+
       axios.post("https://share2.dexcom.com/ShareWebServices/Services/General/AuthenticatePublisherAccount", {
         "accountName": data.username,
         "password": data.password,
@@ -174,6 +200,8 @@ export default function App() {
     .catch(error => console.error(error.response))
     })
     .catch(error => console.error(error.response))
+
+    }
     })
 
 
