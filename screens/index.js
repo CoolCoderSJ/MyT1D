@@ -155,7 +155,6 @@ export default function App() {
           )
       }
 
-      console.log("readings", readings)
       setObj("readings", readings)
       .then(() => isLoading = false)
 

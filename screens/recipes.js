@@ -79,7 +79,6 @@ export default function App() {
       }
 
       setShowMealEditor(true)
-      console.log("recipes", recipes);
     }
 
   function handleChange(i, type, value) {
@@ -100,7 +99,10 @@ export default function App() {
     setFields(values);
 
     recipes[recipeId]['meals'] = values;
+
+    if (value) {
     setObj(`recipes`, recipes);
+    }
     calculateCarbs()
         
   }
@@ -111,7 +113,6 @@ export default function App() {
     setFields(values);
 
     recipes[recipeId]['meals'] = values;
-    setObj(`recipes`, recipes);
     calculateCarbs()
   }
 
@@ -148,7 +149,6 @@ export default function App() {
             });
           }
   
-          console.log("meals", meals);
           setFilterList(meals);
           setMealsList(carbFood);
         })
@@ -169,7 +169,6 @@ export default function App() {
   function calculateCarbs() {
       let totalcarbs = 0;
         for (let i=0; i<fields.length; i++) {
-            console.log("fields", fields[i]);
             if (fields[i].carbs) {
                 totalcarbs += Number(fields[i].carbs);
             }
@@ -191,8 +190,6 @@ export default function App() {
         <VStack space={10} mt="5">
 
      {recipes.map((recipe, idx) => {
-         console.log(idx)
-
             return (
               <HStack space={3}>
      <View>
@@ -221,6 +218,21 @@ export default function App() {
      {showMealEditor &&
      <View>
 
+<View style={{paddingBottom: 20}}>
+        <Button size="lg" colorScheme="indigo" onPress={() => {
+          for (let i=0; i<recipes.length; i++) {
+            if (recipes[i]['name'] == "") {
+              recipes.splice(i, 1);
+            }
+          }
+
+          setShowMealEditor(false)
+          }}>
+                All Recipes
+            </Button>
+            </View>
+
+            <View style={{paddingBottom: 20}}>
      <TextInput
         style={styles.input}
         onChangeText={(value) => {
@@ -251,17 +263,10 @@ export default function App() {
         defaultValue={recipes[recipeId]['unit']}
         placeholder="Units (Plate, Bowl, Bag, etc.)"
         />
-        <View style={{paddingBottom: 20}}>
-        <Button size="lg" colorScheme="indigo" onPress={() => {setShowMealEditor(false)}}>
-                All Recipes
-            </Button>
-            </View>
 
+</View>
 
     <VStack space={10} mt="5">
-    {
-        console.log(fields)
-    }
       {fields.map((field, idx) => {
         
         const styles = StyleSheet.create({
@@ -287,7 +292,7 @@ export default function App() {
           <View alignItems={'flex-start'}>
             <FormControl key={`${field}-${idx}`}>
 
-            <FormControl.Label>Meal</FormControl.Label>
+            <FormControl.Label>Ingredient</FormControl.Label>
 
             <AutocompleteDropdown
               textInputProps={{
@@ -306,11 +311,8 @@ export default function App() {
                   let mealObj = undefined;
 
                   for (let i=0; i<mealsList.length; i++) {
-                    console.log("in loop ", mealsList[i], item.title);
                     if (mealsList[i].meal === item.title) {
-                      console.log("found meal")
                       mealObj = mealsList[i]
-                      console.log("mealObj", mealObj)
                       let fieldset = fields
                       fieldset[idx]['serving'] = "1"
                       fieldset[idx]['carbs'] = mealObj.carbs
