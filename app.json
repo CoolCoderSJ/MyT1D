@@ -1,9 +1,9 @@
 {
-  "name": "Diabetic-Manager",
-  "displayName": "Diabetic Manager",
+  "name": "MyT1D",
+  "displayName": "MyT1D",
   "expo": {
-    "name": "Diabetic-Manager",
-    "slug": "Diabetic-Manager",
+    "name": "MyT1D",
+    "slug": "MyT1D",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -19,13 +19,15 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.shuchirjain.myt1d"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
-      }
+      },
+      "package": "com.shuchirjain.myt1d"
     },
     "web": {
       "favicon": "./assets/favicon.png"
