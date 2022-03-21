@@ -1,37 +1,25 @@
 import * as React from "react"
-import { Dimensions, StyleSheet, TextInput } from "react-native";
+import { StyleSheet, TextInput } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 import {
   Box,
   Text,
-  Heading,
   VStack,
   FormControl,
-  Link,
   Button,
   HStack,
   Center,
-  NativeBaseProvider,
-  CircularProgress,
-  Container,
-  Spinner,
   View,
-  Hidden,
   ScrollView,
-  Typeahead,
   Icon,
-  Pressable,
   Switch,
   Alert,
   Collapse,
-  IconButton
-} from "native-base"
+} from "native-base";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AutocompleteDropdown } from 'react-native-autocomplete-dropdown'
 import DateTimePicker from '@react-native-community/datetimepicker';
-import {
-  ma, dma, ema, sma, wma
-} from 'moving-averages'
+import { ma } from 'moving-averages';
 import { useNavigation } from '@react-navigation/native';
 
 
@@ -158,7 +146,7 @@ export default function App() {
         mainMealSelected = false;
         totalCarb = 0;
         console.log("Meal not found in database, setting fields to empty")
-        setFields([{ }])
+        setFields([{}])
       }
     })
 
@@ -277,11 +265,11 @@ export default function App() {
 
     const values = [...fields];
 
-      if (type === "meal") {
-        value = value.title;
-      }
-      values[i][type] = value;
-    
+    if (type === "meal") {
+      value = value.title;
+    }
+    values[i][type] = value;
+
 
 
     get("meals").then(function (result) {
@@ -386,36 +374,36 @@ export default function App() {
 
   React.useEffect(() => {
     const setDropDownListData = () => {
-      let meals = [ ];
+      let meals = [];
       let carbFood = [];
-  
+
       get("meals").then(function (result) {
         console.log("meals RESULT --> ", result);
         for (let i = 0; i < Object.keys(result).length; i++) {
           meals.push({ id: String(i + 2), title: result[String(i)].meal });
-  
+
           carbFood.push(result[String(i)]);
         }
-  
+
         get("recipes").then((result) => {
           let iterId = meals.length;
           for (let i = 0; i < result.length; i++) {
             meals.push({ id: String(iterId + 2), title: result[i].name });
-  
+
             carbFood.push({
               meal: result[i].name,
               carbs: String((Number(result[i].carbs) / Number(result[i].serving)).toFixed()),
               unit: result[i].unit
             });
-  
+
             iterId += 1;
           }
-  
+
         })
-  
+
         setFilterList(meals);
         setMealsList(carbFood);
-  
+
       });
       // console.log("filter list --> ", filterList);
       return filterList;
@@ -567,8 +555,8 @@ export default function App() {
                                 if (item) {
 
                                   let mealObj = undefined;
-                                  
-                                  for (let i=0; i<mealsList.length; i++) {
+
+                                  for (let i = 0; i < mealsList.length; i++) {
                                     console.log("in loop ", mealsList[i], item.title);
                                     if (mealsList[i].meal === item.title) {
                                       console.log("found meal")
@@ -584,11 +572,11 @@ export default function App() {
                                       setServingSizes(servingSize)
                                     }
                                   }
-                
+
                                   if (!mealObj) {
                                     return
                                   }
-                
+
                                   handleChange(idx, "meal", item);
                                 }
                               }
@@ -651,13 +639,13 @@ export default function App() {
                   })}
 
                   <Button leftIcon={<Icon
-                      color='white'
-                      size="8"
-                      as={<Ionicons name="add-outline" />}
-                    />}
+                    color='white'
+                    size="8"
+                    as={<Ionicons name="add-outline" />}
+                  />}
 
                     onPress={handleAdd}
-                    >Add New</Button>
+                  >Add New</Button>
 
 
                   <View style={{ paddingTop: 20, paddingBottom: 20 }}>

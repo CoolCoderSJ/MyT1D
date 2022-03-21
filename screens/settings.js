@@ -8,19 +8,14 @@ import {
   Button,
   HStack,
   Center,
-  NumberInput,
-  NumberInputField,
-  NumberInputStepper,
-  NumberIncrementStepper,
-  NumberDecrementStepper,
   Collapse,
   ScrollView,
   Alert,
   IconButton,
   CloseIcon,
-  View
+  View,
 } from "native-base";
-import { Dimensions, StyleSheet, TextInput } from "react-native";
+import { StyleSheet, TextInput } from "react-native";
 import { useNavigation } from '@react-navigation/native';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';

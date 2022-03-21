@@ -7,9 +7,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import {
   NativeBaseProvider,
-  Button,
   Box,
-  HamburgerIcon,
   Pressable,
   Heading,
   VStack,
@@ -19,7 +17,6 @@ import {
   Divider,
   Icon,
   Spinner,
-  Container
 } from 'native-base';
 import axios from 'axios';
 
@@ -31,9 +28,9 @@ import SettingsScreen from '../screens/settings';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const set = async (key, value) => {  try {    await AsyncStorage.setItem(key, value)  } catch (e) {   console.log(e)  } }
-const setObj = async (key, value) => {  try {    const jsonValue = JSON.stringify(value); await AsyncStorage.setItem(key, jsonValue)  } catch (e) {    console.log(e)  } }
-const get = async (key) => {  try {    const value = await AsyncStorage.getItem(key); if(value !== null) { try {return JSON.parse(value)} catch {return value} }  } catch(e) {    console.log(e)  }}
+const set = async (key, value) => { try { await AsyncStorage.setItem(key, value) } catch (e) { console.log(e) } }
+const setObj = async (key, value) => { try { const jsonValue = JSON.stringify(value); await AsyncStorage.setItem(key, jsonValue) } catch (e) { console.log(e) } }
+const get = async (key) => { try { const value = await AsyncStorage.getItem(key); if (value !== null) { try { return JSON.parse(value) } catch { return value } } } catch (e) { console.log(e) } }
 
 
 let isLoading = true;
@@ -109,7 +106,7 @@ function CustomDrawerContent(props) {
 }
 function MyDrawer() {
   return (
-      <Box safeArea flex={1}>
+    <Box safeArea flex={1}>
       <Drawer.Navigator
         drawerContent={(props) => <CustomDrawerContent {...props} />}>
         <Drawer.Screen name="Home" component={HomeScreen} />
@@ -126,81 +123,81 @@ function MyDrawer() {
 
 export default function App() {
 
-    const [data, setData] = React.useState({});
+  const [data, setData] = React.useState({});
 
-    get("login")
+  get("login")
     .then(loginInfo => {
 
-    setData({
+      setData({
         ...data,
         username: loginInfo.username,
         password: loginInfo.password
-    })
+      })
 
-    if (data.username == "testDemo" && data.password == "password") {
+      if (data.username == "testDemo" && data.password == "password") {
 
-      function getRandom(min, max) {
-        return Math.random() * (max - min) + min;
-      }
+        function getRandom(min, max) {
+          return Math.random() * (max - min) + min;
+        }
 
-      let readings = [];
-      let trends = ['DoubleUp', 'SingleUp', 'FortyFiveUp', 'Flat', 'FortyFiveDown', 'SingleDown', 'DoubleDown']
+        let readings = [];
+        let trends = ['DoubleUp', 'SingleUp', 'FortyFiveUp', 'Flat', 'FortyFiveDown', 'SingleDown', 'DoubleDown']
 
-      for (let i=0; i<24; i++) {
-        readings.push(
-          {
-            value: Math.round(getRandom(100, 150)),
-            trend: trends[Math.round(getRandom(0, 6))]
-          }
+        for (let i = 0; i < 24; i++) {
+          readings.push(
+            {
+              value: Math.round(getRandom(100, 150)),
+              trend: trends[Math.round(getRandom(0, 6))]
+            }
           )
+        }
+
+        setObj("readings", readings)
+          .then(() => isLoading = false)
+
       }
 
-      setObj("readings", readings)
-      .then(() => isLoading = false)
+      else {
 
-    }
-
-    else {
-
-      axios.post("https://share2.dexcom.com/ShareWebServices/Services/General/AuthenticatePublisherAccount", {
-        "accountName": data.username,
-        "password": data.password,
-        "applicationId": "d89443d2-327c-4a6f-89e5-496bbb0317db",
-    })
-    .then((response) => {
-
-    const account_id = response.data;
-    axios.post("https://share2.dexcom.com/ShareWebServices/Services/General/LoginPublisherAccountById", {
-        "accountId": account_id,
-        "password": data.password,
-        "applicationId": "d89443d2-327c-4a6f-89e5-496bbb0317db",
-    })
-    .then((response) => {
-    const session_id = response.data;
-
-    axios.post(`https://share2.dexcom.com/ShareWebServices/Services/Publisher/ReadPublisherLatestGlucoseValues?sessionId=${session_id}&minutes=1440&maxCount=24`)
-    .then((response) => {
-    response = response.data;
-
-    let readings = []
-    for (let i=0; i<response.length; i++) {
-        readings.push({
-            value: response[i].Value,
-            trend: response[i].Trend
+        axios.post("https://share2.dexcom.com/ShareWebServices/Services/General/AuthenticatePublisherAccount", {
+          "accountName": data.username,
+          "password": data.password,
+          "applicationId": "d89443d2-327c-4a6f-89e5-496bbb0317db",
         })
-    }
+          .then((response) => {
 
-    setObj("readings", readings)
+            const account_id = response.data;
+            axios.post("https://share2.dexcom.com/ShareWebServices/Services/General/LoginPublisherAccountById", {
+              "accountId": account_id,
+              "password": data.password,
+              "applicationId": "d89443d2-327c-4a6f-89e5-496bbb0317db",
+            })
+              .then((response) => {
+                const session_id = response.data;
 
-    isLoading = false;
-    })
-    .catch(error => console.error(error.response))
-    })
-    .catch(error => console.error(error.response))
-    })
-    .catch(error => console.error(error.response))
+                axios.post(`https://share2.dexcom.com/ShareWebServices/Services/Publisher/ReadPublisherLatestGlucoseValues?sessionId=${session_id}&minutes=1440&maxCount=24`)
+                  .then((response) => {
+                    response = response.data;
 
-    }
+                    let readings = []
+                    for (let i = 0; i < response.length; i++) {
+                      readings.push({
+                        value: response[i].Value,
+                        trend: response[i].Trend
+                      })
+                    }
+
+                    setObj("readings", readings)
+
+                    isLoading = false;
+                  })
+                  .catch(error => console.error(error.response))
+              })
+              .catch(error => console.error(error.response))
+          })
+          .catch(error => console.error(error.response))
+
+      }
     })
 
 
@@ -208,20 +205,20 @@ export default function App() {
     <NavigationContainer independent={true}>
       <NativeBaseProvider>
 
-      {isLoading &&
-      <Center flex={1} px="3">
-      <HStack space={2} alignItems="center">
-        <Spinner size="lg" accessibilityLabel="Loading posts" />
-        <Heading color="primary.500" fontSize="3xl">
-          Loading
-        </Heading>
-      </HStack>
-      </Center>
-      }
+        {isLoading &&
+          <Center flex={1} px="3">
+            <HStack space={2} alignItems="center">
+              <Spinner size="lg" accessibilityLabel="Loading posts" />
+              <Heading color="primary.500" fontSize="3xl">
+                Loading
+              </Heading>
+            </HStack>
+          </Center>
+        }
 
-      {!isLoading &&
-       <MyDrawer />
-      }
+        {!isLoading &&
+          <MyDrawer />
+        }
       </NativeBaseProvider>
     </NavigationContainer>
   );

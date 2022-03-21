@@ -1,31 +1,20 @@
 import * as React from "react"
-import { Dimensions, StyleSheet, TextInput } from "react-native";
+import { StyleSheet, TextInput } from "react-native";
 import {
   Box,
   Text,
-  Heading,
   VStack,
   FormControl,
-  Link,
   Button,
   HStack,
   Center,
-  NativeBaseProvider,
-  CircularProgress,
-  Container,
-  Spinner,
   View,
-  Hidden,
   ScrollView,
-  Typeahead,
-  Input,
   Icon,
-  Pressable
-} from "native-base"
+} from "native-base";
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AutocompleteDropdown } from 'react-native-autocomplete-dropdown'
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { useNavigation } from '@react-navigation/native';
 
 
