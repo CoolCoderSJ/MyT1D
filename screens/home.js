@@ -1,3 +1,4 @@
+// Import all libraries required
 import * as React from 'react';
 import { Box, Heading, VStack, Text, Center, HStack, Stack, View } from 'native-base';
 import { Dimensions } from "react-native";
@@ -6,15 +7,17 @@ import Arrow from 'react-native-arrow';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 
-
+// Initialize the database operations
 const set = async (key, value) => { try { await AsyncStorage.setItem(key, value) } catch (e) { console.log(e) } }
 const setObj = async (key, value) => { try { const jsonValue = JSON.stringify(value); await AsyncStorage.setItem(key, jsonValue) } catch (e) { console.log(e) } }
 const get = async (key) => { try { const value = await AsyncStorage.getItem(key); if (value !== null) { try { return JSON.parse(value) } catch { return value } } } catch (e) { console.log(e) } }
 const getAll = async () => { try { const keys = await AsyncStorage.getAllKeys(); return keys } catch (error) { console.error(error) } }
 
+// Initialize the state
 let sugarValues = 0;
 
 function Home() {
+  // Initialize the state
   const navigation = useNavigation();
   const [, forceUpdate] = React.useReducer(x => x + 1, 0);
 
@@ -26,10 +29,12 @@ function Home() {
   const [showDoubleArrow, setShowDoubleArrow] = React.useState(false);
   const [readingValues, setReadingValues] = React.useState([0, 0]);
 
+  // Run once the app has loaded
   React.useEffect(() => {
+    // Run the function every time the user switches to the screen
     const refreshData = navigation.addListener('focus', () => {
-      console.log("loading data")
 
+      // Get the total number of foods and set it in the state
       get("meals").then(function (result) {
         if (result) {
           setFoods(result.length);
@@ -39,7 +44,7 @@ function Home() {
         }
       });
 
-
+      // Get the total number of recipes and set it in the state
       get("recipes").then(function (result) {
         if (result) {
           setRecipeCount(result.length);
@@ -50,14 +55,16 @@ function Home() {
       });
 
 
-
+      // Get glucose readings from the database
       get("readings")
         .then(result => {
+          // Set the latest glucose value in the state
           let readings = result
           setFirstValue(readings[0].value)
 
           let trend = readings[0].trend
 
+          // Set the arrow direction based on the trend
           switch (trend) {
             case "DoubleUp": { setRotationFactor(90); setShowDoubleArrow(true); setShowSingleArrow(true); break }
             case "SingleUp": { setRotationFactor(90); setShowDoubleArrow(false); setShowSingleArrow(true); break }
@@ -74,25 +81,25 @@ function Home() {
             rValues.push(readings[i].value)
           }
 
+          // Set a reverse copy (oldest to latest) of the glucose readings in the state
           setReadingValues(rValues.reverse())
         })
 
+      // Get every thing from the database
       getAll().then(function (result) {
-        console.log("All keys: ", result)
 
         let sValues = [];
+        // Loop through all of the keys
         for (let i = 0; i < result.length; i++) {
+          // If the key is an identifier for a meal
           if (result[i].includes("meal") && !result[i].includes("metadata") && result != "meals") {
-            console.log("getting metadata for ", result[i])
+            // Get the metadata stored
             get(result[i] + "metadata").then(function (meta) {
+              // If a glucose value was stored
               if (meta.dexVal) {
-                console.log("Sugar value ", meta.dexVal)
+                // Set the last glucose value to the value found
                 sValues.push(meta.dexVal)
-
-                console.log(sValues)
                 sugarValues = sValues[0];
-
-                console.log("All sugar values: " + sugarValues)
                 forceUpdate()
               }
             });
@@ -100,6 +107,7 @@ function Home() {
         }
       });
 
+      // Update the screen render
       forceUpdate();
     });
     return refreshData;

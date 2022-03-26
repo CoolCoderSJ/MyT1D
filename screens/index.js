@@ -1,3 +1,4 @@
+// Import the libraries required
 import * as React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import {
@@ -28,15 +29,18 @@ import SettingsScreen from '../screens/settings';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// Initialize the database functions
 const set = async (key, value) => { try { await AsyncStorage.setItem(key, value) } catch (e) { console.log(e) } }
 const setObj = async (key, value) => { try { const jsonValue = JSON.stringify(value); await AsyncStorage.setItem(key, jsonValue) } catch (e) { console.log(e) } }
 const get = async (key) => { try { const value = await AsyncStorage.getItem(key); if (value !== null) { try { return JSON.parse(value) } catch { return value } } } catch (e) { console.log(e) } }
 
-
+// Whether the app is loading or not, used to show and hide the loading spinner
 let isLoading = true;
 
+// Create the drawer navigator
 const Drawer = createDrawerNavigator();
 
+// Match the icon to the tab name
 const getIcon = (screenName) => {
   switch (screenName) {
     case 'Home':
@@ -105,6 +109,7 @@ function CustomDrawerContent(props) {
   );
 }
 function MyDrawer() {
+  // Register all of the screens
   return (
     <Box safeArea flex={1}>
       <Drawer.Navigator
@@ -123,8 +128,10 @@ function MyDrawer() {
 
 export default function App() {
 
+  // Set the state of the app
   const [data, setData] = React.useState({});
 
+  // Get the login information from the database
   get("login")
     .then(loginInfo => {
 
@@ -134,15 +141,19 @@ export default function App() {
         password: loginInfo.password
       })
 
+      // If the app is in test mode
       if (data.username == "testDemo" && data.password == "password") {
 
+        // Get a random number within a range
         function getRandom(min, max) {
           return Math.random() * (max - min) + min;
         }
 
+        // Initialize a readings list and all possible trends
         let readings = [];
         let trends = ['DoubleUp', 'SingleUp', 'FortyFiveUp', 'Flat', 'FortyFiveDown', 'SingleDown', 'DoubleDown']
 
+        // Load 24 random glucose values
         for (let i = 0; i < 24; i++) {
           readings.push(
             {
@@ -158,14 +169,14 @@ export default function App() {
       }
 
       else {
-
+        // Get an account id from Dexcom
         axios.post("https://share2.dexcom.com/ShareWebServices/Services/General/AuthenticatePublisherAccount", {
           "accountName": data.username,
           "password": data.password,
           "applicationId": "d89443d2-327c-4a6f-89e5-496bbb0317db",
         })
           .then((response) => {
-
+            // Get a session ID from Dexcom
             const account_id = response.data;
             axios.post("https://share2.dexcom.com/ShareWebServices/Services/General/LoginPublisherAccountById", {
               "accountId": account_id,
@@ -174,11 +185,12 @@ export default function App() {
             })
               .then((response) => {
                 const session_id = response.data;
-
+                // Use the session ID to get the readings
                 axios.post(`https://share2.dexcom.com/ShareWebServices/Services/Publisher/ReadPublisherLatestGlucoseValues?sessionId=${session_id}&minutes=1440&maxCount=24`)
                   .then((response) => {
                     response = response.data;
 
+                    // Set the readings list to the database
                     let readings = []
                     for (let i = 0; i < response.length; i++) {
                       readings.push({
@@ -189,6 +201,7 @@ export default function App() {
 
                     setObj("readings", readings)
 
+                    // FInish loading
                     isLoading = false;
                   })
                   .catch(error => console.error(error.response))

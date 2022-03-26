@@ -1,3 +1,4 @@
+// Import the libraries needed
 import * as React from "react"
 import { StyleSheet, TextInput } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
@@ -22,11 +23,12 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { ma } from 'moving-averages';
 import { useNavigation } from '@react-navigation/native';
 
-
+// Initialize the database functions
 const set = async (key, value) => { try { await AsyncStorage.setItem(key, value) } catch (e) { console.log(e) } }
 const setObj = async (key, value) => { try { const jsonValue = JSON.stringify(value); await AsyncStorage.setItem(key, jsonValue) } catch (e) { console.log(e) } }
 const get = async (key) => { try { const value = await AsyncStorage.getItem(key); if (value !== null) { try { return JSON.parse(value) } catch { return value } } } catch (e) { console.log(e) } }
 
+// Initialize all of the variables
 let foodUnits = "";
 let correction = "";
 let totalUnits = "";
@@ -35,33 +37,21 @@ let factors = {};
 let readings = [];
 let sugarValue = 0;
 let totalCarb = 0;
-
-const styles = StyleSheet.create({
-  input: {
-    height: 40,
-    borderWidth: 1,
-    padding: 10,
-    borderRadius: 5,
-    marginBottom: 5,
-  },
-});
-
 let mainMealSelected = false
 let mainMeal = undefined
-
 let showAlert = false;
 let amount = "";
-
 let settingsMissing = false;
+
 
 export default function App() {
   const navigation = useNavigation();
 
+  // Initialize the state
   const [, forceUpdate] = React.useReducer(x => x + 1, 0);
 
   const [fields, setFields] = React.useState([{}]);
 
-  const [filterText, setFilterText] = React.useState('');
   const [filterList, setFilterList] = React.useState([]);
   const [mealsList, setMealsList] = React.useState([]);
 
@@ -73,19 +63,20 @@ export default function App() {
 
 
   const fetchMeals = () => {
-    // setFields([{}]);
-    console.log(`meal${date.getMonth() + 1}${date.getDate()}${date.getFullYear()}${meal}`)
+    // Fetch the ingredients from a database
     get(`meal${date.getMonth() + 1}${date.getDate()}${date.getFullYear()}${meal}`).then((result) => {
-      console.log("result", result)
       if (result) {
-        console.log("Meal found in database, setting fields")
-
+        // Set the state to the ingredients found
         setFields(result);
 
+        // Loop through all of the ingredients
         for (let a = 0; a < result.length; a++) {
+          // Get the list of all ingredients
           get("meals").then((foods) => {
             if (foods) {
+              // For each ingredient in the database
               for (let b = 0; b < foods.length; b++) {
+                // If the ingredient in the database found matches the ingredient in the state
                 if (foods[b].meal == result[a].meal && result[a].mainMeal) {
                   let mealMap = {
                     "Breakfast": "Lunch",
@@ -97,6 +88,7 @@ export default function App() {
 
                   let sugarValueList = [];
 
+                  // Get the sugar value for the meal after the meal that the ingredient is in
                   for (let j = 0; j < foods[b]['usedMeals'].length; j++) {
                     let usedMealId = foods[b]['usedMeals'][j];
                     let usedMealName = usedMealId.split("meal")[1].replace(/[0-9]/g, '');
@@ -113,11 +105,13 @@ export default function App() {
                         }
                       })
                       .then(() => {
-
+                        // If there were any ingredients found
                         if (sugarValueList && sugarValueList.length > 0) {
+                          // Get a moving average of all of the previous sugar values
                           let averages = ma(sugarValueList, sugarValueList.length);
                           let prediction = averages[sugarValueList.length - 1];
 
+                          // Show the message
                           if (prediction > 100) {
                             amount = `${prediction - 100} higher`
                           }
@@ -138,18 +132,20 @@ export default function App() {
 
         }
 
+        // Run the insulin calculator
         calculateInsulin();
       }
       else {
+        // Clear the state
         showAlert = false;
         mainMeal = undefined;
         mainMealSelected = false;
         totalCarb = 0;
-        console.log("Meal not found in database, setting fields to empty")
         setFields([{}])
       }
     })
 
+    // Update the factors variable from the database
     get("factors").then((result) => {
       if (result) {
         factors = result;
@@ -160,6 +156,7 @@ export default function App() {
   }
 
   const calculateInsulin = () => {
+    // Get the ingredients
     get(`meal${date.getMonth() + 1}${date.getDate()}${date.getFullYear()}${meal}`).then((values) => {
 
       let specificItoCFactor = null;
@@ -167,7 +164,7 @@ export default function App() {
       let generalIToCFactor = factors.itoc;
       let generalISFFactor = factors.isf;
 
-
+      // Get the specific factors
       switch (meal) {
         case "Breakfast": specificItoCFactor = factors.itocm; break;
         case "Lunch": specificItoCFactor = factors.itocl; break;
@@ -184,13 +181,16 @@ export default function App() {
         case "NightSnack": specificISFFactor = factors.isfe; break;
       }
 
+      // If there aren't any specific factors, use the general ones
       if (!specificItoCFactor) { specificItoCFactor = generalIToCFactor };
       if (!specificISFFactor) { specificISFFactor = generalISFFactor };
 
+      // If there are no factors, skip all steps and show the user a message
       if (!generalIToCFactor || !generalISFFactor) {
         settingsMissing = true;
       }
 
+      // Calculate the total carbs
       totalCarb = 0;
       for (let i = 0; i < values.length; i++) {
         if (values[i].carbs) {
@@ -198,6 +198,7 @@ export default function App() {
         }
       };
 
+      // Get the dexcom values
       get("readings").then((result) => {
         readings = result;
 
@@ -208,6 +209,7 @@ export default function App() {
 
         let threshold = null;
 
+        // Set the threshold
         switch (meal) {
           case "Breakfast": threshold = 100; break;
           case "Lunch": threshold = 100; break;
@@ -216,19 +218,22 @@ export default function App() {
           case "NightSnack": threshold = 120; break;
         }
 
+        // Calculate the food units and round to 2 places
         foodUnits = String((totalCarb / specificItoCFactor).toFixed(2));
 
-
+        // Check if correction is needed
         if (dexVal > threshold) {
+          // Calculate the correction factor and round to 2 places
           correction = String(((dexVal - threshold) / specificISFFactor).toFixed(2));
         }
         else {
           correction = '0';
         }
 
-
+        // Calculate the total insulin
         totalUnits = String((Number(foodUnits) + Number(correction)).toFixed(2));
 
+        // Show the user a message if there are no settings to use to calculate
         if (String(foodUnits) == "NaN") {
           foodUnits = "Not Available"
         }
@@ -243,47 +248,55 @@ export default function App() {
 
       }).then(() => {
 
+        // Set the metadata to the database 
         setObj(`meal${date.getMonth() + 1}${date.getDate()}${date.getFullYear()}${meal}metadata`, {
           dexVal: sugarValue,
           totalCarb: totalCarb,
         })
 
+        // Update the screen rendering
         forceUpdate()
 
       });
     });
   }
 
-
+  // What happens when an ingredient is changed
   function handleChange(i, type, value) {
 
-
-    console.log("handleChange", i, type, value);
+    // If there is no value to update, skip function
     if (value == null || value == undefined) {
       return
     }
 
+    // Get the ingredients from the state
     const values = [...fields];
 
+    // Remove noise from data
     if (type === "meal") {
       value = value.title;
     }
+
+    // Update the value
     values[i][type] = value;
 
 
-
+    // Get all ingredients 
     get("meals").then(function (result) {
 
       let foods = result;
 
       let id = `meal${date.getMonth() + 1}${date.getDate()}${date.getFullYear()}${meal}`
 
+      // Loop through all ingredients in the state
       for (let a = 0; a < foods.length; a++) {
+        // if the ingredient is found
         if (values && foods[a]['meal'] == values[i]['meal']) {
 
-
+          // If the current ingredient is being used as a main meal
           if (type === "mainMeal") {
             if (value && !foods[a]['usedMeals'].includes(id)) {
+              // Update the foods list to add the current meal's id to the list of meals the food is a mainmeal in
               foods[a]["usedMeals"].push(id)
             }
             else if (!value) {
@@ -294,6 +307,7 @@ export default function App() {
               }
             }
 
+            // Get the sugar value for the next meal
             if (value) {
               let mealMap = {
                 "Breakfast": "Lunch",
@@ -322,9 +336,12 @@ export default function App() {
                   })
                   .then(() => {
                     if (sugarValueList && sugarValueList.length > 0) {
+                      // Get a list of moving averages from the list of sugar values
                       let averages = ma(sugarValueList, sugarValueList.length);
+                      // Get a single moving average
                       let prediction = averages[sugarValueList.length - 1];
 
+                      // Show the message to the user
                       if (prediction > 100) {
                         amount = `${prediction - 100} higher`
                       }
@@ -347,9 +364,12 @@ export default function App() {
         }
       }
 
+      // Update the foods database
       setObj("meals", foods);
+      // Update the state
       setFields(values);
 
+      // Update the meals database then calculate the insulin
       setObj(id, values).then(() => calculateInsulin());
 
     });
@@ -357,28 +377,34 @@ export default function App() {
 
   }
 
+  // When a new ingredient is added
   function handleAdd() {
     const values = [...fields];
+    // Add a new blank set
     values.push({ meal: null, carbs: null, unit: null });
+
+    // Update the state and database
     setFields(values);
     setObj(`meal${date.getMonth() + 1}${date.getDate()}${date.getFullYear()}${meal}`, values);
   }
 
+  // What happens when a delete button is clicked
   function handleRemove(i) {
     const values = [...fields];
+    // Remove the selected ingredient
     values.splice(i, 1);
+    // Update the state and database
     setFields(values);
     setObj(`meal${date.getMonth() + 1}${date.getDate()}${date.getFullYear()}${meal}`, values).then(() => calculateInsulin())
   }
 
-
+  // Update the dropdown data every time the user comes back to this screen from another
   React.useEffect(() => {
     const setDropDownListData = () => {
       let meals = [];
       let carbFood = [];
 
       get("meals").then(function (result) {
-        console.log("meals RESULT --> ", result);
         for (let i = 0; i < Object.keys(result).length; i++) {
           meals.push({ id: String(i + 2), title: result[String(i)].meal });
 
@@ -405,7 +431,6 @@ export default function App() {
         setMealsList(carbFood);
 
       });
-      // console.log("filter list --> ", filterList);
       return filterList;
     }
 
@@ -417,7 +442,7 @@ export default function App() {
   }, [navigation]);
 
 
-
+  // Show the date picker when the user clicks on the date
   const showDatePicker = () => {
     setShow(true);
   }
@@ -479,6 +504,7 @@ export default function App() {
                     is24Hour={false}
                     display="default"
                     onChange={(e, selectedDate) => {
+                      // Update the date
                       setDate(selectedDate || date);
                       setShow(false);
                       fetchMeals();
@@ -495,8 +521,6 @@ export default function App() {
 
                   {fields.map((field, idx) => {
 
-                    console.log("field", field)
-
                     const styles = StyleSheet.create({
                       input: {
                         height: 40,
@@ -507,6 +531,7 @@ export default function App() {
                       },
                     });
 
+                    // Get meal title 
                     let mealTitle = "";
 
                     if (field) {
@@ -514,8 +539,6 @@ export default function App() {
                         mealTitle = field.meal;
                       }
                     }
-
-                    console.log("main meal ", mainMeal, idx)
 
                     return (
                       <HStack space="7">
@@ -555,14 +578,13 @@ export default function App() {
                                 if (item) {
 
                                   let mealObj = undefined;
-
+                                  // If the ingredient is in the database
                                   for (let i = 0; i < mealsList.length; i++) {
-                                    console.log("in loop ", mealsList[i], item.title);
                                     if (mealsList[i].meal === item.title) {
-                                      console.log("found meal")
+                                      // Get the ingredient from the database
                                       mealObj = mealsList[i]
-                                      console.log("mealObj", mealObj)
                                       let fieldset = fields
+                                      // Update the ingredient set
                                       fieldset[idx]['serving'] = "1"
                                       fieldset[idx]['carbs'] = mealObj.carbs
                                       fieldset[idx]['unit'] = mealObj.unit
@@ -576,7 +598,7 @@ export default function App() {
                                   if (!mealObj) {
                                     return
                                   }
-
+                                  // Make sure to update the database too
                                   handleChange(idx, "meal", item);
                                 }
                               }
@@ -621,6 +643,7 @@ export default function App() {
                               isDisabled={mainMealSelected && mainMeal != idx}
                               isChecked={mainMeal == idx || field['mainMeal']}
                               onToggle={(value) => {
+                                // Update the check to reflect the toggle's current state
                                 mainMealSelected = value
                                 if (value) {
                                   mainMeal = idx
