@@ -2,6 +2,7 @@
   "name": "MyT1D",
   "displayName": "MyT1D",
   "expo": {
+    "owner": "myt1d",
     "name": "MyT1D",
     "slug": "MyT1D",
     "version": "1.0.0",
