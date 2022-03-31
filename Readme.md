@@ -1,9 +1,7 @@
-# expo-template-native-base
+Narrative can be found [here](https://github.com/CoolCoderSJ/MyT1D/wiki)
 
-The official NativeBase template for [Expo](https://docs.expo.io/)
+Roadmap can be found [here](https://github.com/CoolCoderSJ/MyT1D/wiki/Pseudocode)
 
-## Usage
+Roadmap can be found [here](https://github.com/CoolCoderSJ/MyT1D/wiki/Roadmap)
 
-```sh
-expo init my-app --template expo-template-native-base
-```
+User Guide can be found [here](https://github.com/CoolCoderSJ/MyT1D/wiki/User-Guide)
