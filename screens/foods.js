@@ -1,6 +1,6 @@
 // Import the libraries needed
 import * as React from "react"
-import { StyleSheet, TextInput } from "react-native";
+import { StyleSheet, TextInput, KeyboardAvoidingView } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 
 import { Box, VStack, FormControl, Button, HStack, Center, View, ScrollView, Icon } from "native-base";
@@ -88,6 +88,10 @@ export default function App() {
 
 
   return (
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1 }}
+    >
     <ScrollView contentContainerStyle={{ flexGrow: 2 }}>
       <View style={{ padding: 40 }}>
         <Center>
@@ -105,6 +109,7 @@ export default function App() {
                       padding: 10,
                       borderRadius: 5,
                       marginBottom: 5,
+                      width: 200
                     },
                   });
 
@@ -154,11 +159,12 @@ export default function App() {
               />}
 
                 onPress={handleAdd}
-              >Add New</Button>
+              >Add Ingredient</Button>
             </VStack>
           </Box>
         </Center>
       </View>
     </ScrollView>
+    </KeyboardAvoidingView>
   );
 }

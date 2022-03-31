@@ -16,7 +16,7 @@ import {
   CloseIcon,
   View,
 } from "native-base";
-import { StyleSheet, TextInput } from "react-native";
+import { StyleSheet, TextInput, KeyboardAvoidingView } from "react-native";
 import { useNavigation } from '@react-navigation/native';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -129,6 +129,10 @@ const Settings = () => {
   });
 
   return (
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1 }}
+    >
     <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
       <View style={{ padding: 40 }}>
         <Center flex={1} px="3">
@@ -248,6 +252,7 @@ const Settings = () => {
         </Center>
       </View>
     </ScrollView>
+    </KeyboardAvoidingView>
   )
 }
 

@@ -1,6 +1,6 @@
 // Import the libraries needed
 import * as React from "react"
-import { StyleSheet, TextInput } from "react-native";
+import { StyleSheet, TextInput, KeyboardAvoidingView } from "react-native";
 import {
   Box,
   Text,
@@ -163,6 +163,8 @@ export default function App() {
 
           setFilterList(meals);
           setMealsList(carbFood);
+          // Force update the list
+          forceUpdate();
         })
 
         // Calculate carbs
@@ -196,6 +198,10 @@ export default function App() {
 
 
   return (
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1 }}
+    >
     <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
       <View style={{ padding: 40 }}>
         <Center>
@@ -226,7 +232,7 @@ export default function App() {
                 />}
 
                   onPress={() => { recipeId = recipes.length; fetchMeals(); }}
-                >Add New</Button>
+                >Add Recipe</Button>
               </VStack>
             }
 
@@ -389,7 +395,7 @@ export default function App() {
                   />}
 
                     onPress={handleAdd}
-                  >Add New</Button>
+                  >Add Ingredient</Button>
 
                   <View style={{ paddingTop: 20, paddingBottom: 20 }}>
                     <Text fontSize="lg" style={{ textAlign: 'center' }}>Total Carbs: {recipes[recipeId]['carbs']}</Text>
@@ -402,6 +408,7 @@ export default function App() {
         </Center>
       </View>
     </ScrollView>
+    </KeyboardAvoidingView>
 
   );
 }
