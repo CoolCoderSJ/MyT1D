@@ -33,6 +33,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const set = async (key, value) => { try { await AsyncStorage.setItem(key, value) } catch (e) { console.log(e) } }
 const setObj = async (key, value) => { try { const jsonValue = JSON.stringify(value); await AsyncStorage.setItem(key, jsonValue) } catch (e) { console.log(e) } }
 const get = async (key) => { try { const value = await AsyncStorage.getItem(key); if (value !== null) { try { return JSON.parse(value) } catch { return value } } } catch (e) { console.log(e) } }
+const delkey = async (key, value) => { try { await AsyncStorage.removeItem(key) } catch (e) { console.log(e) } }
 
 // Whether the app is loading or not, used to show and hide the loading spinner
 let isLoading = true;
@@ -102,6 +103,32 @@ function CustomDrawerContent(props) {
                 </HStack>
               </Pressable>
             ))}
+
+            <Pressable
+                px="5"
+                py="3"
+                rounded="md"
+                onPress={(event) => {
+                  console.log("logging out")
+                  delkey("login").then(() => {console.log("deleted"); props.navigation.goBack(); props.navigation.goBack(); props.navigation.goBack(); props.navigation.goBack(); props.navigation.goBack(); props.navigation.goBack()})
+                }}>
+                <HStack space="7" alignItems="center">
+                  <Icon
+                    color={
+                      'error.500'
+                    }
+                    size="5"
+                    as={<Ionicons name={"log-out-outline"} />}
+                  />
+                  <Text
+                    fontWeight="500"
+                    color={
+                      'error.500'
+                    }>
+                    Logout
+                  </Text>
+                </HStack>
+              </Pressable>
           </VStack>
         </VStack>
       </VStack>
@@ -169,6 +196,7 @@ export default function App() {
       }
 
       else {
+        console.log(data)
         // Get an account id from Dexcom
         axios.post("https://share2.dexcom.com/ShareWebServices/Services/General/AuthenticatePublisherAccount", {
           "accountName": data.username,
@@ -215,7 +243,6 @@ export default function App() {
 
 
   return (
-    <NavigationContainer independent={true}>
       <NativeBaseProvider>
 
         {isLoading &&
@@ -233,6 +260,5 @@ export default function App() {
           <MyDrawer />
         }
       </NativeBaseProvider>
-    </NavigationContainer>
   );
 }
