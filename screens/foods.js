@@ -1,10 +1,32 @@
 // Import the libraries needed
 import * as React from "react"
-import { StyleSheet, TextInput, KeyboardAvoidingView } from "react-native";
+import { StyleSheet, KeyboardAvoidingView } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 
-import { Box, VStack, FormControl, Button, HStack, Center, View, ScrollView, Icon } from "native-base";
+import { 
+  ScrollView, 
+  ActivityIndicator,
+  View,
+  Pressable
+} from "react-native";
+
+import { VStack, HStack, Spacer } from 'react-native-stacks';
+
+import {
+  Layout,
+  TopNav,
+  Text,
+  TextInput,
+  themeColor,
+  SectionContent,
+  Section,
+  useTheme,
+  Button
+} from "react-native-rapi-ui";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import { useNavigation } from '@react-navigation/native';
+
 
 // Initialize the database functions
 const set = async (key, value) => { try { await AsyncStorage.setItem(key, value) } catch (e) { console.log(e) } }
@@ -14,6 +36,8 @@ const get = async (key) => { try { const value = await AsyncStorage.getItem(key)
 
 export default function App() {
   // Initialize the state
+  const navigation = useNavigation();
+  const { isDarkmode, setTheme } = useTheme();
   const [fields, setFields] = React.useState([{}]);
 
   // Run once the app has loaded
@@ -92,79 +116,93 @@ export default function App() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={{ flex: 1 }}
     >
-    <ScrollView contentContainerStyle={{ flexGrow: 2 }}>
-      <View style={{ padding: 40 }}>
-        <Center>
-          <Box safeArea p="2" py="2" w="90%" maxW="290" h="90%">
 
-            <VStack space={10} mt="5">
-              { /* Loop through the ingredients */
-                fields.map((field, idx) => {
+<Layout>
+    <TopNav
+    leftContent={
+      <Ionicons
+        name="chevron-back"
+        size={20}
+        color={isDarkmode ? themeColor.white : themeColor.black}
+      />
+    }
+      leftAction={() => navigation.goBack()}
+      middleContent="Ingredients"
+      rightContent={
+        <Ionicons
+          name={isDarkmode ? "sunny" : "moon"}
+          size={20}
+          color={isDarkmode ? themeColor.white100 : themeColor.dark}
+        />
+      }
+      rightAction={() => {
+        if (isDarkmode) {
+          setTheme("light");
+        } else {
+          setTheme("dark");
+        }
+      }}
+    />
+    <ScrollView>
+      {
+        fields.map((field, idx) => {
+          return (
+          <Section style={{ marginHorizontal: 20, marginTop: 20 }}>
+          <SectionContent>
+            <View style={{ marginBottom: 20 }}>
+            <TextInput
+              placeholder="Ingredient name"
+              onChangeText={e => handleChange(idx, "meal", e)}
+              value={field.meal}
+            />
+              </View>
 
-                  // make a style object for the input
-                  const styles = StyleSheet.create({
-                    input: {
-                      height: 40,
-                      borderWidth: 1,
-                      padding: 10,
-                      borderRadius: 5,
-                      marginBottom: 5,
-                      width: 200
-                    },
-                  });
+              <View style={{ marginBottom: 20 }}>
+              <TextInput
+                placeholder="Carbs"
+                onChangeText={e => handleChange(idx, "carbs", e)}
+                value={field.carbs}
+                keyboardType="numeric"
+              />
+              </View>
 
-                  return (
-                    <HStack space={7}>
-                      <View alignItems={'flex-start'}>
-                        <FormControl key={`${field}-${idx}`}>
-                          <TextInput
-                            placeholder="Ingredient name"
-                            style={styles.input}
-                            onChangeText={e => handleChange(idx, "meal", e)}
-                            value={field.meal}
-                          />
-                          <TextInput
-                            placeholder="Carbs"
-                            style={styles.input}
-                            onChangeText={e => handleChange(idx, "carbs", e)}
-                            value={field.carbs}
-                            keyboardType="numeric"
-                          />
-                          <TextInput
-                            placeholder="Unit (e.g. cup, oz, etc.)"
-                            style={styles.input}
-                            onChangeText={e => handleChange(idx, "unit", e)}
-                            value={field.unit}
-                          />
+              <View style={{ marginBottom: 20 }}>
+              <TextInput
+                placeholder="Unit (e.g. cup, oz, etc.)"
+                onChangeText={e => handleChange(idx, "unit", e)}
+                value={field.unit}
+              />
+              </View>
 
-                        </FormControl>
-                      </View>
-
-                      <Button size="lg" colorScheme="error" onPress={() => handleRemove(idx, field)} variant="outline">
-                        <Icon
-                          color='error.500'
-                          size="8"
-                          as={<Ionicons name="trash-outline" />}
-                        />
-                      </Button>
-
-                    </HStack>
-                  );
-                })}
-
-              <Button leftIcon={<Icon
-                color='white'
-                size="8"
-                as={<Ionicons name="add-outline" />}
-              />}
-
-                onPress={handleAdd}
-              >Add Ingredient</Button>
-            </VStack>
-          </Box>
-        </Center>
-      </View>
+              <View>
+              <Button
+              style={{ marginTop: 10 }}
+              leftContent={
+                <Ionicons name="trash-outline" size={20} color={themeColor.white} />
+              }
+              text="Remove"
+              status="danger"
+              type="TouchableOpacity"
+              onPress={() => {handleRemove(idx)}}
+            />
+              </View>
+          </SectionContent>
+          </Section>
+          )
+        })
+      }
+      <Button
+        style={{ marginVertical: 10, marginHorizontal: 20 }}
+        leftContent={
+          <Ionicons name="add-circle-outline" size={20} color={themeColor.white} />
+        }
+        text="Add New Ingredient"
+        status="primary"
+        type="TouchableOpacity"
+        onPress={handleAdd}
+      />
     </ScrollView>
+    </Layout>
     </KeyboardAvoidingView>
   );
 }

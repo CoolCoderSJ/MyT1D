@@ -1,6 +1,27 @@
 // Import all libraries required
 import * as React from 'react';
-import { Box, Heading, VStack, Text, Center, HStack, Stack, View } from 'native-base';
+import { 
+  ScrollView, 
+  ActivityIndicator,
+  View,
+  Pressable
+ } from "react-native";
+import { VStack, HStack } from 'react-native-stacks';
+import { Ionicons } from '@expo/vector-icons';
+import {
+  Layout,
+  TopNav,
+  Text,
+  TextInput,
+  themeColor,
+  SectionContent,
+  Section,
+  useTheme,
+  Button
+} from "react-native-rapi-ui";
+import { enableScreens } from "react-native-screens";
+
+
 import { Dimensions } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 import Arrow from 'react-native-arrow';
@@ -15,8 +36,12 @@ const getAll = async () => { try { const keys = await AsyncStorage.getAllKeys();
 
 // Initialize the state
 let sugarValues = 0;
+let arrow = ""
 
 function Home() {
+
+  const { isDarkmode, setTheme } = useTheme();
+
   // Initialize the state
   const navigation = useNavigation();
   const [, forceUpdate] = React.useReducer(x => x + 1, 0);
@@ -24,9 +49,6 @@ function Home() {
   const [foods, setFoods] = React.useState(0);
   const [recipeCount, setRecipeCount] = React.useState(0);
   const [first_value, setFirstValue] = React.useState("Loading...");
-  const [rotation_factor, setRotationFactor] = React.useState(180);
-  const [showSingleArrow, setShowSingleArrow] = React.useState(false);
-  const [showDoubleArrow, setShowDoubleArrow] = React.useState(false);
   const [readingValues, setReadingValues] = React.useState([0, 0]);
 
   // Run once the app has loaded
@@ -66,14 +88,14 @@ function Home() {
 
           // Set the arrow direction based on the trend
           switch (trend) {
-            case "DoubleUp": { setRotationFactor(90); setShowDoubleArrow(true); setShowSingleArrow(true); break }
-            case "SingleUp": { setRotationFactor(90); setShowDoubleArrow(false); setShowSingleArrow(true); break }
-            case "FortyFiveUp": { setRotationFactor(135); setShowDoubleArrow(false); setShowSingleArrow(true); break }
-            case "Flat": { setRotationFactor(180); setShowDoubleArrow(false); setShowSingleArrow(true); break }
-            case "FortyFiveDown": { setRotationFactor(225); setShowDoubleArrow(false); setShowSingleArrow(true); break }
-            case "SingleDown": { setRotationFactor(270); setShowDoubleArrow(false); setShowSingleArrow(true); break }
-            case "DoubleDown": { setRotationFactor(270); setShowDoubleArrow(true); setShowSingleArrow(true); break }
-            default: { setShowDoubleArrow(false); setShowSingleArrow(false); break }
+            case "DoubleUp": { arrow = "⇈"; break }
+            case "SingleUp": { arrow = "↑"; break }
+            case "FortyFiveUp": { arrow = "↗"; break }
+            case "Flat": { arrow = "→"; break }
+            case "FortyFiveDown": { arrow = "↘"; break }
+            case "SingleDown": { arrow = "↓"; break }
+            case "DoubleDown": { arrow = "⇊"; break }
+            default: { arrow = ""; break }
           }
 
           let rValues = []
@@ -83,6 +105,7 @@ function Home() {
 
           // Set a reverse copy (oldest to latest) of the glucose readings in the state
           setReadingValues(rValues.reverse())
+          forceUpdate();
         })
 
       // Get every thing from the database
@@ -115,30 +138,63 @@ function Home() {
 
 
   return (
-    <Center flex={1} px="3">
-
-      <Box safeArea w="100%" p="2" py="8">
-        <VStack space={3} mt="5">
-          <Text color="primary.500" fontSize="xl" style={{ textAlign: 'center' }}>Current Glucose Value-
-            <Text color="warning.800" fontSize="xl" style={{ textAlign: 'center' }}>
-              {first_value}
-
-              {showSingleArrow &&
-                <View pl="1" style={[{ transform: [{ rotate: `${rotation_factor}deg` }] }]}><Arrow size={10} color={'#9a3412'} /></View>
-              }
-
-              {showDoubleArrow &&
-                <View style={[{ transform: [{ rotate: `${rotation_factor}deg` }] }]}><Arrow size={10} color={'#9a3412'} /></View>
-              }
+    <Layout>
+    <TopNav
+    leftContent={
+      <Ionicons
+        name="chevron-back"
+        size={20}
+        color={isDarkmode ? themeColor.white : themeColor.black}
+      />
+    }
+      leftAction={() => navigation.goBack()}
+      middleContent="Home"
+      rightContent={
+        <Ionicons
+          name={isDarkmode ? "sunny" : "moon"}
+          size={20}
+          color={isDarkmode ? themeColor.white100 : themeColor.dark}
+        />
+      }
+      rightAction={() => {
+        if (isDarkmode) {
+          setTheme("light");
+        } else {
+          setTheme("dark");
+        }
+      }}
+    />
+    <ScrollView>
+      <Section style={{ marginHorizontal: 20, marginTop: 20 }}>
+        <SectionContent>
+          <View style={{ marginBottom: 20 }}>
+          <Text size="xl" style={{ textAlign: 'center' }}>Current Glucose Value-
+            <Text size="xl" style={{ textAlign: 'center' }}>
+              {first_value} <Text size='h1'>{arrow}</Text>
             </Text>
           </Text>
+          </View>
 
-          <Text pb="4" color="primary.500" fontSize="xl" style={{ textAlign: 'center' }}>Sugar At Last Recorded Meal- <Text color="warning.800">{sugarValues}</Text></Text>
+        </SectionContent>
+      </Section>
 
-          <Text fontSize="md" style={{ textAlign: 'center' }}>mg/dl over the past 2 hours-</Text>
+      <Section style={{ marginHorizontal: 20, marginTop: 20 }}>
+        <SectionContent>
+          <View style={{ marginBottom: 20 }}>
+          <Text pb="4" size="xl" style={{ textAlign: 'center' }}>Sugar At Last Recorded Meal- <Text color="warning.800">{sugarValues}</Text></Text>
+          </View>
 
+        </SectionContent>
+      </Section>
+
+      <Section style={{ marginHorizontal: 20, marginTop: 20 }}>
+        <SectionContent>
+          <View style={{ marginBottom: 20 }}>
+          <Text size="md" style={{ textAlign: 'center' }}>mg/dl over the past 2 hours-</Text>
+
+          </View>
           {first_value != "Loading..." &&
-            <Center>
+            <View>
               <LineChart
                 data={{
                   labels: ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
@@ -151,12 +207,12 @@ function Home() {
                 width={Dimensions.get("window").width - (Dimensions.get("window").width - 300)}
                 height={325}
                 chartConfig={{
-                  backgroundColor: "#000000",
-                  backgroundGradientFrom: "#000000",
-                  backgroundGradientTo: "#000000",
+                  backgroundColor: isDarkmode ?  "rgb(38, 40, 52, 1)" : "rgb(247, 247, 247, 1)",
+                  backgroundGradientFrom: isDarkmode ?  "rgb(38, 40, 52, 1)" : "rgb(247, 247, 247, 1)",
+                  backgroundGradientTo: isDarkmode ?  "rgb(38, 40, 52, 1)" : "rgb(247, 247, 247, 1)",
                   decimalPlaces: 0,
-                  color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-                  labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                  color: (opacity = 1) => {`rgb(255, 255, 255, ${opacity})`},
+                  labelColor: (opacity = 1) => {`rgb(255, 255, 255, ${opacity})`},
                   style: {
                     borderRadius: 16,
                   },
@@ -164,6 +220,9 @@ function Home() {
                     r: "3",
                     strokeWidth: "1",
                     stroke: "#06b6d4"
+                  },
+                  propsForLabels: {
+                    fill: "white"
                   }
                 }}
                 bezier
@@ -172,62 +231,41 @@ function Home() {
                   padding: 10
                 }}
               />
-            </Center>
+            </View>
           }
-        </VStack>
-      </Box>
+          <View>
 
-      <HStack>
-        <Box alignItems="center">
-          <Box w="100%" h="40" mb="10" textAlign="center" shadow="9" rounded="lg" overflow="hidden" borderColor="coolGray.200" borderWidth="1" _dark={{
-            borderColor: "coolGray.600",
-            backgroundColor: "gray.700"
-          }} _web={{
-            shadow: 2,
-            borderWidth: 0
-          }} _light={{
-            backgroundColor: "gray.50"
-          }}>
-            <Stack p="4" space={3}>
-              <Stack space={2}>
-                <Heading size="md" ml="-1" textAlign="center">
+          </View>
+        </SectionContent>
+      </Section>
+
+      <Section style={{ marginHorizontal: 20, marginTop: 20 }}>
+        <SectionContent>
+          <View style={{ marginBottom: 20 }}>
+          <Text size="md" ml="-1" textAlign="center">
                   Foods Stored
-                </Heading>
-              </Stack>
+                </Text>
               <Text fontWeight="400" textAlign="center">
                 {foods}
               </Text>
-            </Stack>
-          </Box>
-        </Box>
+          </View>
+        </SectionContent>
+      </Section>
 
-
-
-        <Box alignItems="center">
-          <Box w="100%" h="40" mb="10" textAlign="center" shadow="9" rounded="lg" overflow="hidden" borderColor="coolGray.200" borderWidth="1" _dark={{
-            borderColor: "coolGray.600",
-            backgroundColor: "gray.700"
-          }} _web={{
-            shadow: 2,
-            borderWidth: 0
-          }} _light={{
-            backgroundColor: "gray.50"
-          }}>
-            <Stack p="4" space={3}>
-              <Stack space={2}>
-                <Heading size="md" ml="-1" textAlign="center">
+      <Section style={{ marginHorizontal: 20, marginTop: 20 }}>
+        <SectionContent>
+          <View style={{ marginBottom: 20 }}>
+          <Text size="md" ml="-1" textAlign="center">
                   Recipes Stored
-                </Heading>
-              </Stack>
+                </Text>
               <Text fontWeight="400" textAlign="center">
                 {recipeCount}
               </Text>
-            </Stack>
-          </Box>
-        </Box>
-      </HStack>
-
-    </Center>
+          </View>
+        </SectionContent>
+      </Section>
+    </ScrollView>
+  </Layout>
   );
 }
 
