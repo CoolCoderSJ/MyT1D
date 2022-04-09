@@ -50,7 +50,7 @@ let mainMeal = undefined
 let showAlert = false;
 let amount = "";
 let settingsMissing = false;
-
+let lastSugarValue = "Not recorded";
 
 export default function App() {
   const navigation = useNavigation();
@@ -267,6 +267,14 @@ export default function App() {
         }
 
       }).then(() => {
+
+        get(`meal${date.getMonth() + 1}${date.getDate()}${date.getFullYear()}${meal}metadata`).then((metadata) => {
+          if (metadata) {
+            if (metadata.dexVal) {
+              lastSugarValue = metadata.dexVal;
+            }
+          }
+        });
 
         // Set the metadata to the database 
         setObj(`meal${date.getMonth() + 1}${date.getDate()}${date.getFullYear()}${meal}metadata`, {
@@ -765,7 +773,12 @@ export default function App() {
             <SectionContent>
               <View>
               <Text fontSize="lg" style={{ textAlign: 'center' }}>
-                Glucose Value: {sugarValue}
+                Current Glucose Value: {sugarValue}
+              </Text>
+              </View>
+              <View>
+              <Text fontSize="lg" style={{ textAlign: 'center' }}>
+                Last Recorded Glucose Value: {lastSugarValue}
               </Text>
               </View>
               <View>
