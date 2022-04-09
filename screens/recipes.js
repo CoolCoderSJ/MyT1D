@@ -33,11 +33,16 @@ const get = async (key) => { try { const value = await AsyncStorage.getItem(key)
 // Initialize the variables
 let recipeId = NaN;
 let recipes = [];
+let filterAllowed = []
+
 
 // Update the recipes variable from the database
 get("recipes").then((result) => {
   if (result) {
     recipes = result;
+    for (let i = 0; i < recipes.length; i++) {
+      filterAllowed.push(i);
+    };
   }
 })
 
@@ -78,25 +83,25 @@ export default function App() {
   }
 
   // Create a style object for inputs
-const styles = StyleSheet.create({
-  input: {
-    height: 40,
-    borderWidth: 1,
-    padding: 10,
-    borderRadius: 5,
-    marginBottom: 5,
-  },
-  listItem: {
-    marginHorizontal: 20,
-    marginTop: 20,
-    padding: 20,
-    backgroundColor: isDarkmode ? "#262834" : "white",
-    borderRadius: 10,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-});
+  const styles = StyleSheet.create({
+    input: {
+      height: 40,
+      borderWidth: 1,
+      padding: 10,
+      borderRadius: 5,
+      marginBottom: 5,
+    },
+    listItem: {
+      marginHorizontal: 20,
+      marginTop: 20,
+      padding: 20,
+      backgroundColor: isDarkmode ? "#262834" : "white",
+      borderRadius: 10,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+  });
 
 
   // What to do when anything changes
@@ -139,6 +144,9 @@ const styles = StyleSheet.create({
     setFields(values);
 
     recipes[recipeId]['meals'] = values;
+
+    filterAllowed.push(values.length - 1);
+
     calculateCarbs()
   }
 
@@ -251,32 +259,66 @@ const styles = StyleSheet.create({
         <ScrollView>
           {!showMealEditor &&
             <View>
+              <View
+                style={{
+                  marginHorizontal: 20,
+                  marginVertical: 20,
+                }}
+              >
+                <TextInput
+                  placeholder="Search..."
+                  leftContent={
+                    <Ionicons
+                      name="search-circle"
+                      size={20}
+                      color={themeColor.gray300}
+                    />
+                  }
+                  onChangeText={e => {
+                    let values = recipes;
+                    let allowed = []
+                    for (let i = 0; i < values.length; i++) {
+                      if (values[i].name.toLowerCase().includes(e.toLowerCase())) {
+                        allowed.push(i);
+                      }
+                    }
+                    filterAllowed = allowed;
+                    forceUpdate();
+                  }}
+                />
+              </View>
+
               {recipes.map((recipe, idx) => {
                 return (
                   <View>
-                    <TouchableOpacity onPress={() => { recipeId = idx; fetchMeals() }}>
-                      <View style={styles.listItem}>
-                        <Text fontWeight="medium">{recipe.name}</Text>
-                        <Ionicons
-                          name="chevron-forward"
-                          size={20}
-                          color={isDarkmode ? themeColor.white : themeColor.black}
+                    {filterAllowed.includes(idx) &&
+                      <View>
+                        <TouchableOpacity onPress={() => { recipeId = idx; fetchMeals() }}>
+                          <View style={styles.listItem}>
+                            <Text fontWeight="medium">{recipe.name}</Text>
+                            <Ionicons
+                              name="chevron-forward"
+                              size={20}
+                              color={isDarkmode ? themeColor.white : themeColor.black}
+                            />
+                          </View>
+                        </TouchableOpacity>
+                        <Button
+                          style={{ marginTop: 10, marginHorizontal: 20, marginBottom: 20 }}
+                          leftContent={
+                            <Ionicons name="trash-outline" size={20} color={themeColor.white} />
+                          }
+                          text="Remove this recipe"
+                          status="danger"
+                          type="TouchableOpacity"
+                          onPress={() => { recipes.splice(idx, 1); setObj('recipes', recipes); forceUpdate() }}
                         />
                       </View>
-                    </TouchableOpacity>
-                    <Button
-                    style={{ marginTop: 10, marginHorizontal: 20, marginBottom: 20 }}
-                    leftContent={
-                      <Ionicons name="trash-outline" size={20} color={themeColor.white} />
                     }
-                    text="Remove this recipe"
-                    status="danger"
-                    type="TouchableOpacity"
-                    onPress={() => { recipes.splice(idx, 1); setObj('recipes', recipes); forceUpdate() }}
-                  />
                   </View>
                 )
-              })}
+              }
+              )}
               <Button
                 style={{ marginVertical: 10, marginHorizontal: 20 }}
                 leftContent={
@@ -289,6 +331,7 @@ const styles = StyleSheet.create({
               />
             </View>
           }
+
 
           {showMealEditor &&
             <View>
@@ -358,77 +401,77 @@ const styles = StyleSheet.create({
                   <Section style={{ marginHorizontal: 20, marginTop: 20 }}>
                     <SectionContent>
                       <View style={{ marginBottom: 20 }}>
-                      <AutocompleteDropdown
-                        textInputProps={{
-                          "value": mealTitle,
-                        }}
-                        showClear={true}
-                        clearOnFocus={false}
-                        closeOnBlur={false}
-                        closeOnSubmit={true}
-                        dataSet={filterList}
-                        onChangeText={e => handleChange(idx, "meal", e)}
-                        onClear={() => handleRemove(idx)}
-                        onSelectItem={(item) => {
-                          if (item) {
+                        <AutocompleteDropdown
+                          textInputProps={{
+                            "value": mealTitle,
+                          }}
+                          showClear={true}
+                          clearOnFocus={false}
+                          closeOnBlur={false}
+                          closeOnSubmit={true}
+                          dataSet={filterList}
+                          onChangeText={e => handleChange(idx, "meal", e)}
+                          onClear={() => handleRemove(idx)}
+                          onSelectItem={(item) => {
+                            if (item) {
 
-                            let mealObj = undefined;
+                              let mealObj = undefined;
 
-                            for (let i = 0; i < mealsList.length; i++) {
-                              if (mealsList[i].meal === item.title) {
-                                mealObj = mealsList[i]
-                                let fieldset = fields
-                                fieldset[idx]['serving'] = "1"
-                                fieldset[idx]['carbs'] = mealObj.carbs
-                                fieldset[idx]['unit'] = mealObj.unit
-                                setFields(fieldset)
-                                let servingSize = servingSizes;
-                                servingSize[idx] = mealObj.carbs;
-                                setServingSizes(servingSize)
+                              for (let i = 0; i < mealsList.length; i++) {
+                                if (mealsList[i].meal === item.title) {
+                                  mealObj = mealsList[i]
+                                  let fieldset = fields
+                                  fieldset[idx]['serving'] = "1"
+                                  fieldset[idx]['carbs'] = mealObj.carbs
+                                  fieldset[idx]['unit'] = mealObj.unit
+                                  setFields(fieldset)
+                                  let servingSize = servingSizes;
+                                  servingSize[idx] = mealObj.carbs;
+                                  setServingSizes(servingSize)
+                                }
                               }
+
+                              if (!mealObj) {
+                                return
+                              }
+
+                              handleChange(idx, "meal", item);
                             }
+                          }}
+                        />
+                      </View>
 
-                            if (!mealObj) {
-                              return
+                      <View style={{ marginBottom: 20 }}>
+                        <TextInput
+                          placeholder="Serving Size"
+                          onChangeText={e => {
+                            if (servingSizes[idx]) {
+                              let fieldset = fields
+                              fieldset[idx]['carbs'] = String(Number(e) * servingSizes[idx])
+                              setFields(fieldset)
                             }
-
-                            handleChange(idx, "meal", item);
-                          }
-                        }}
-                      />
+                            handleChange(idx, "serving", e)
+                          }}
+                          value={field.serving}
+                          keyboardType="numeric"
+                        />
                       </View>
 
                       <View style={{ marginBottom: 20 }}>
-                      <TextInput
-                        placeholder="Serving Size"
-                        onChangeText={e => {
-                          if (servingSizes[idx]) {
-                            let fieldset = fields
-                            fieldset[idx]['carbs'] = String(Number(e) * servingSizes[idx])
-                            setFields(fieldset)
-                          }
-                          handleChange(idx, "serving", e)
-                        }}
-                        value={field.serving}
-                        keyboardType="numeric"
-                      />
-                      </View>
-                        
-                      <View style={{ marginBottom: 20 }}>
-                      <TextInput
-                        placeholder="Carbs"
-                        onChangeText={e => handleChange(idx, "carbs", e)}
-                        value={field.carbs}
-                        keyboardType="numeric"
-                      />
+                        <TextInput
+                          placeholder="Carbs"
+                          onChangeText={e => handleChange(idx, "carbs", e)}
+                          value={field.carbs}
+                          keyboardType="numeric"
+                        />
                       </View>
 
                       <View style={{ marginBottom: 20 }}>
-                      <TextInput
-                        placeholder="Unit"
-                        onChangeText={e => handleChange(idx, "unit", e)}
-                        value={field.unit}
-                      />
+                        <TextInput
+                          placeholder="Unit"
+                          onChangeText={e => handleChange(idx, "unit", e)}
+                          value={field.unit}
+                        />
                       </View>
 
                       <View style={{ marginBottom: 20 }}>

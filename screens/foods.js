@@ -33,9 +33,11 @@ const set = async (key, value) => { try { await AsyncStorage.setItem(key, value)
 const setObj = async (key, value) => { try { const jsonValue = JSON.stringify(value); await AsyncStorage.setItem(key, jsonValue) } catch (e) { console.log(e) } }
 const get = async (key) => { try { const value = await AsyncStorage.getItem(key); if (value !== null) { try { return JSON.parse(value) } catch { return value } } } catch (e) { console.log(e) } }
 
+let filterAllowed = []
 
 export default function App() {
   // Initialize the state
+  const [, forceUpdate] = React.useReducer(x => x + 1, 0);
   const navigation = useNavigation();
   const { isDarkmode, setTheme } = useTheme();
   const [fields, setFields] = React.useState([{}]);
@@ -57,6 +59,7 @@ export default function App() {
           carbs: meals[String(i)].carbs,
           unit: meals[String(i)].unit
         });
+        filterAllowed.push(i);
       }
 
       // Remove the empty object that's left over
@@ -99,6 +102,7 @@ export default function App() {
     values.push({ meal: null, carbs: null, unit: null, usedMeals: [] });
     setFields(values);
     setObj("meals", values);
+    filterAllowed.push(fields.length - 1);
   }
 
   // What happens when the delete button is clicked
@@ -144,9 +148,42 @@ export default function App() {
       }}
     />
     <ScrollView>
+    <View
+    style={{
+      marginHorizontal: 20,
+      marginVertical: 20,
+    }}
+    >
+    <TextInput
+      placeholder="Search..."
+      leftContent={
+        <Ionicons
+          name="search-circle"
+          size={20}
+          color={themeColor.gray300}
+        />
+      }
+      onChangeText={e => {
+        let values = [...fields];
+        let allowed = []
+        for (let i=0; i<values.length; i++) {
+          if (values[i].meal.toLowerCase().includes(e.toLowerCase())) {
+            allowed.push(i);
+          }
+        }
+
+        filterAllowed = allowed;
+        forceUpdate();
+      }}
+    />
+    </View>
+
       {
         fields.map((field, idx) => {
           return (
+            <View>
+            {filterAllowed.includes(idx) &&
+            
           <Section style={{ marginHorizontal: 20, marginTop: 20 }}>
           <SectionContent>
             <View style={{ marginBottom: 20 }}>
@@ -188,6 +225,8 @@ export default function App() {
               </View>
           </SectionContent>
           </Section>
+            }
+            </View>
           )
         })
       }
