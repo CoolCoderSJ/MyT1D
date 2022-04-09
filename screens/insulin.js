@@ -286,21 +286,40 @@ export default function App() {
           if (metadata) {
             if (metadata.dexVal) {
               lastSugarValue = metadata.dexVal;
+              console.log(metadata.dexVal, lastSugarValue)
+              forceUpdate()
             }
           }
         });
-
-        // Set the metadata to the database 
-        setObj(`meal.${date.getMonth() + 1}.${date.getDate()}.${date.getFullYear()}.${meal}metadata`, {
-          dexVal: sugarValue,
-          totalCarb: totalCarb,
-        })
 
         // Update the screen rendering
         forceUpdate()
 
       });
     });
+  }
+
+  const updateInsulinDB = () => {
+    get("readings").then((result) => {
+      readings = result;
+      let dexVal = readings[0].value;
+      totalCarb = 0;
+      for (let i = 0; i < fields.length; i++) {
+        if (fields[i].carbs) {
+          totalCarb += Number(fields[i].carbs);
+        }
+      };
+
+      lastSugarValue = dexVal;
+      forceUpdate();
+
+      // Set the metadata to the database 
+      setObj(`meal.${date.getMonth() + 1}.${date.getDate()}.${date.getFullYear()}.${meal}metadata`, {
+        dexVal: dexVal,
+        totalCarb: totalCarb,
+      })
+
+    })
   }
 
   // What happens when an ingredient is changed
@@ -855,6 +874,9 @@ export default function App() {
                   <Text fontSize="lg" style={{ textAlign: 'center' }} color={totalUnits == "Not Available" ? "#ff0000" : "#000000"}>
                     Total Units: {totalUnits}
                   </Text>
+                </View>
+                <View style={{marginVertical: 10}}>
+                <Button style={{ marginHorizontal: 20, marginVertical: 10 }} text="Update Metadata in the Database" status="primary" onPress={() => { updateInsulinDB(); }} />
                 </View>
               </SectionContent>
             </Section>
