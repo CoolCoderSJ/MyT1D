@@ -334,10 +334,17 @@ export default function App() {
 
     // Get the ingredients from the state
     const values = [...fields];
-    
+
     // Update the value
     values[i][type] = value;
 
+    // Update the state
+    setFields(values);
+
+    let id = `meal.${date.getMonth() + 1}.${date.getDate()}.${date.getFullYear()}.${meal}`
+
+    // Update the meals database then calculate the insulin
+    setObj(id, values).then(() => calculateInsulin());
 
     // Get all ingredients 
     get("meals").then(function (result) {
@@ -430,18 +437,20 @@ export default function App() {
               }
             }
 
-            // Update the foods database
-            setObj("meals", foods);
-            // Update the state
-            setFields(values);
-
-            // Update the meals database then calculate the insulin
-            setObj(id, values).then(() => calculateInsulin());
-
           }
         }
       }
-    });
+
+      // Update the foods database
+    setObj("meals", foods);
+
+    // Update the state
+    setFields(values);
+
+    // Update the meals database then calculate the insulin
+    setObj(id, values).then(() => calculateInsulin());
+
+    })
 
     forceUpdate();
 
