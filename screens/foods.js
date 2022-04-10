@@ -190,7 +190,7 @@ export default function App() {
             <TextInput
               placeholder="Ingredient name"
               onChangeText={e => handleChange(idx, "meal", e)}
-              value={field.meal}
+              defaultValue={field.meal}
             />
               </View>
 
@@ -198,7 +198,7 @@ export default function App() {
               <TextInput
                 placeholder="Carbs"
                 onChangeText={e => handleChange(idx, "carbs", e)}
-                value={field.carbs}
+                defaultValue={field.carbs}
                 keyboardType="numeric"
               />
               </View>
@@ -207,7 +207,7 @@ export default function App() {
               <TextInput
                 placeholder="Unit (e.g. cup, oz, etc.)"
                 onChangeText={e => handleChange(idx, "unit", e)}
-                value={field.unit}
+                defaultValue={field.unit}
               />
               </View>
 

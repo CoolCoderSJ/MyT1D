@@ -112,12 +112,6 @@ export default function App() {
       return
     }
 
-    // Clean the noise from the data
-    if (value) {
-      if (type === "meal") {
-        value = value.title;
-      }
-    }
 
     // Update the state
     const values = [...fields];
@@ -391,20 +385,41 @@ export default function App() {
                 let mealTitle = "";
 
 
-                if (field) {
-                  if (field.meal) {
-                    mealTitle = field.meal;
-                  }
-                }
-
                 return (
                   <Section style={{ marginHorizontal: 20, marginTop: 20 }}>
                     <SectionContent>
                       <View style={{ marginBottom: 20 }}>
                         <AutocompleteDropdown
                           textInputProps={{
-                            "value": mealTitle,
+                            value: field.meal,
+                            placeholder: "Ingredient Name",
+                            style: {
+                              color: isDarkmode ? themeColor.white : themeColor.dark,
+                              backgroundColor: isDarkmode ? "#262834" : themeColor.white,
+                              borderColor: isDarkmode ? "#60647e" : "#d8d8d8",
+                              borderWidth: 1,
+                              borderRadius: 8,
+                              flexDirection: "row",
+                              paddingHorizontal: 20,
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              fontFamily: "Ubuntu_400Regular",
+                            }
                           }}
+  
+                          rightButtonsContainerStyle={{
+                            backgroundColor: isDarkmode ? "#262834" : themeColor.white,
+                            borderColor: isDarkmode ? "#60647e" : "#d8d8d8",
+                            borderWidth: 1,
+                            borderRadius: 8,
+                          }}
+                          suggestionsListContainerStyle={{
+                            backgroundColor: isDarkmode ? "#262834" : themeColor.white,
+                            color: isDarkmode ? themeColor.white : themeColor.dark,
+                          }}
+                          renderItem={(item, text) => (
+                            <Text style={{ color: "#fff", padding: 15 }}>{item.title}</Text>
+                          )}
                           showClear={true}
                           clearOnFocus={false}
                           closeOnBlur={false}
@@ -435,7 +450,7 @@ export default function App() {
                                 return
                               }
 
-                              handleChange(idx, "meal", item);
+                              handleChange(idx, "meal", item.title);
                             }
                           }}
                         />
@@ -452,7 +467,7 @@ export default function App() {
                             }
                             handleChange(idx, "serving", e)
                           }}
-                          value={field.serving}
+                          defaultValue={field.serving}
                           keyboardType="numeric"
                         />
                       </View>
@@ -461,7 +476,7 @@ export default function App() {
                         <TextInput
                           placeholder="Carbs"
                           onChangeText={e => handleChange(idx, "carbs", e)}
-                          value={field.carbs}
+                          defaultValue={field.carbs}
                           keyboardType="numeric"
                         />
                       </View>
@@ -470,7 +485,7 @@ export default function App() {
                         <TextInput
                           placeholder="Unit"
                           onChangeText={e => handleChange(idx, "unit", e)}
-                          value={field.unit}
+                          defaultValue={field.unit}
                         />
                       </View>
 

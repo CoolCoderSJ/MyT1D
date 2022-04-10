@@ -325,6 +325,8 @@ export default function App() {
   // What happens when an ingredient is changed
   function handleChange(i, type, value) {
 
+    console.log(i, type, value)
+
     // If there is no value to update, skip function
     if (value == null || value == undefined) {
       return
@@ -332,12 +334,7 @@ export default function App() {
 
     // Get the ingredients from the state
     const values = [...fields];
-
-    // Remove noise from data
-    if (type === "meal") {
-      value = value.title;
-    }
-
+    
     // Update the value
     values[i][type] = value;
 
@@ -689,19 +686,14 @@ export default function App() {
 
             {fields.map((field, idx) => {
 
-              // Get meal title 
-              let mealTitle = "";
 
-              if (field) {
-                if (field.meal) {
-                  mealTitle = field.meal;
-                }
-              }
               
               if (field['mainMeal'] == true) {
                 mainMealSelected = true;
                 mainMeal = idx;
               }
+
+              console.log(field)
 
               return (
                 <Section style={{ marginHorizontal: 20, marginTop: 20 }}>
@@ -712,18 +704,44 @@ export default function App() {
                       }
                       <AutocompleteDropdown
                         textInputProps={{
-                          "value": mealTitle,
+                          value: field.meal,
+                          placeholder: "Ingredient Name",
+                          style: {
+                            color: isDarkmode ? themeColor.white : themeColor.dark,
+                            backgroundColor: isDarkmode ? "#262834" : themeColor.white,
+                            borderColor: isDarkmode ? "#60647e" : "#d8d8d8",
+                            borderWidth: 1,
+                            borderRadius: 8,
+                            flexDirection: "row",
+                            paddingHorizontal: 20,
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            fontFamily: "Ubuntu_400Regular",
+                          }
                         }}
+
+                        rightButtonsContainerStyle={{
+                          backgroundColor: isDarkmode ? "#262834" : themeColor.white,
+                          borderColor: isDarkmode ? "#60647e" : "#d8d8d8",
+                          borderWidth: 1,
+                          borderRadius: 8,
+                        }}
+                        suggestionsListContainerStyle={{
+                          backgroundColor: isDarkmode ? "#262834" : themeColor.white,
+                          color: isDarkmode ? themeColor.white : themeColor.dark,
+                        }}
+                        renderItem={(item, text) => (
+                          <Text style={{ color: "#fff", padding: 15 }}>{item.title}</Text>
+                        )}
                         showClear={true}
                         clearOnFocus={false}
                         closeOnBlur={false}
                         closeOnSubmit={true}
                         dataSet={filterList}
-                        onChangeText={e => handleChange(idx, "meal", e)}
+                        onChangeText={e => {handleChange(idx, "meal", e)}}
                         onClear={() => handleRemove(idx)}
                         onSelectItem={(item) => {
                           if (item) {
-
                             let mealObj = undefined;
                             // If the ingredient is in the database
                             for (let i = 0; i < mealsList.length; i++) {
@@ -746,7 +764,7 @@ export default function App() {
                               return
                             }
                             // Make sure to update the database too
-                            handleChange(idx, "meal", item);
+                            handleChange(idx, "meal", item.title);
                           }
                         }
                         }
@@ -764,7 +782,7 @@ export default function App() {
                           }
                           handleChange(idx, "serving", e)
                         }}
-                        value={field.serving}
+                        defaultValue={field.serving}
                         keyboardType="numeric"
                       />
                     </View>
@@ -773,7 +791,7 @@ export default function App() {
                       <TextInput
                         placeholder="Carbs"
                         onChangeText={e => handleChange(idx, "carbs", e)}
-                        value={field.carbs}
+                        defaultValue={field.carbs}
                         keyboardType="numeric"
                       />
                     </View>
@@ -782,7 +800,7 @@ export default function App() {
                       <TextInput
                         placeholder="Unit"
                         onChangeText={e => handleChange(idx, "unit", e)}
-                        value={field.unit}
+                        defaultValue={field.unit}
                       />
                     </View>
 
