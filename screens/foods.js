@@ -103,6 +103,7 @@ export default function App() {
     setFields(values);
     setObj("meals", values);
     filterAllowed.push(fields.length - 1);
+    forceUpdate();
   }
 
   // What happens when the delete button is clicked

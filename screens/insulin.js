@@ -114,10 +114,7 @@ export default function App() {
                   // Get the sugar value for the meal after the meal that the ingredient is in
                   for (let j = 0; j < foods[b]['usedMeals'].length; j++) {
                     let usedMealId = foods[b]['usedMeals'][j];
-                    let usedMealName = usedMealId.split("meal")[1].replace(/[0-9]/g, '');
-                    let restOfTheId = usedMealId.split(usedMealName)[0];
-
-                    let nextId = `${restOfTheId}${mealMap[usedMealName]}`;
+                    let nextId = `${usedMealId.split(".")[0]}.${usedMealId.split(".")[1]}.${usedMealId.split(".")[2]}.${usedMealId.split(".")[3]}.${mealMap[usedMealId.split(".")[4]]}`;
 
                     let currentval = 0;
 
@@ -128,6 +125,7 @@ export default function App() {
 
                           get(`${nextId}metadata`)
                             .then((result) => {
+                              console.log(usedMealId, currentval, nextId, result)
                               if (result) {
                                 if (result.dexVal) {
                                   sugarValueList.push(currentval - result.dexVal)
@@ -168,6 +166,7 @@ export default function App() {
 
         // Run the insulin calculator
         calculateInsulin();
+        forceUpdate();
       }
       else {
         // Clear the state
@@ -486,7 +485,7 @@ export default function App() {
         for (let i = 0; i < result.length; i++) {
           if (result[i].includes("meal") && !result[i].includes("metadata") && result != "meals") {
             get(result[i]).then(function (data) {
-              if (data && !result[i].includes("meals")) {
+              if (data && !result[i].includes("meals") && (result[i].includes("Breakfast") || result[i].includes("Lunch") || result[i].includes("PMSnack") || result[i].includes("Dinner") || result[i].includes("NightSnack"))) {
                 for (let a=0; a<data.length; a++) {
                   let obj = {
                     meal: data[a].meal,
@@ -685,6 +684,7 @@ export default function App() {
                   setDate(selectedDate || date);
                   setShow(false);
                   fetchMeals();
+                  forceUpdate();
                 }}
               />
             )}
@@ -702,7 +702,7 @@ export default function App() {
                 mainMeal = idx;
               }
 
-              console.log(field)
+              console.log(showAlert, mainMeal)
 
               return (
                 <Section style={{ marginHorizontal: 20, marginTop: 20 }}>
@@ -936,6 +936,7 @@ export default function App() {
                   return
                 }
                 mealFilter = [];
+                console.log(allMeals)
                 for (let i=0; i<allMeals.length; i++) {
                   if (allMeals[i].meal.toLowerCase().includes(e.toLowerCase())) {
 
@@ -963,7 +964,7 @@ export default function App() {
                       <Text size="h3">{field.title}</Text>
                     </View>
                     <View style={{marginBottom: 20}}>
-                      <Text size="lg">{field.carb}</Text>
+                      <Text size="lg">Carbs: {field.carb}</Text>
                     </View>
                     <View style={{marginBottom: 20}}>
                       <Text size="md">{field.date.toLocaleDateString()} - {field.meal}</Text>

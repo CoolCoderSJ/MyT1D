@@ -28,7 +28,7 @@ const set = async (key, value) => { try { await AsyncStorage.setItem(key, value)
 const setObj = async (key, value) => { try { const jsonValue = JSON.stringify(value); await AsyncStorage.setItem(key, jsonValue) } catch (e) { console.log(e) } }
 const get = async (key) => { try { const value = await AsyncStorage.getItem(key); if (value !== null) { try { return JSON.parse(value) } catch { return value } } } catch (e) { console.log(e) } }
 
-
+savedSettings = {}
 
 console.disableYellowBox = true;
 
@@ -36,49 +36,15 @@ const Settings = () => {
   const { isDarkmode, setTheme } = useTheme();
   const navigation = useNavigation();
 
-  // Initialize the state
-  const [savedSettings, setSettings] = React.useState({});
-
-  const [showitoc, setShowitoc] = React.useState(false);
-  const handleToggleitoc = () => setShowitoc(!showitoc);
-
-  const [showisf, setShowisf] = React.useState(false);
-  const handleToggleisf = () => setShowisf(!showisf);
-
-  const [showAlert, setShowAlert] = React.useState(false);
-
-  // Remove the alert box when someone comes back to the screen
-  React.useEffect(() => {
-    const refreshData = navigation.addListener('focus', () => {
-      setShowAlert(false)
-    });
-
-    return refreshData;
-  }, [navigation]);
-
   // Run once the app has loaded
   React.useEffect(() => {
     // Get the existing factors and set them in the database
     get("factors")
       .then(factors => {
-        setSettings({
-          ...savedSettings,
-          itoc: factors.itoc,
-          itocm: factors.itocm,
-          itocl: factors.itocl,
-          itoca: factors.itoca,
-          itocd: factors.itocd,
-          itoce: factors.itoce,
-          isf: factors.isf,
-          isfm: factors.isfm,
-          isfl: factors.isfl,
-          isfa: factors.isfa,
-          isfd: factors.isfd,
-          isfe: factors.isfe,
-        })
+        savedSettings = factors
       })
       .catch(error => {
-        setSettings({
+        savedSettings = {
           ...savedSettings,
           itoc: 0,
           itocm: 0,
@@ -92,60 +58,16 @@ const Settings = () => {
           isfa: 0,
           isfd: 0,
           isfe: 0,
-        })
+        }
       })
   }, []);
 
 
   // Update the database when the user clicks Save
   const onSave = () => {
-    setObj('factors', {
-      "name": "factors",
-      "itoc": savedSettings.itoc,
-      "itocm": savedSettings.itocm,
-      "itocl": savedSettings.itocl,
-      "itoca": savedSettings.itoca,
-      "itocd": savedSettings.itocd,
-      "itoce": savedSettings.itoce,
-      "isf": savedSettings.isf,
-      "isfm": savedSettings.isfm,
-      "isfl": savedSettings.isfl,
-      "isfa": savedSettings.isfa,
-      "isfd": savedSettings.isfd,
-      "isfe": savedSettings.isfe,
-    })
-      .then(() => {
-        setObj('factors', {
-          "name": "factors",
-          "itoc": savedSettings.itoc,
-          "itocm": savedSettings.itocm,
-          "itocl": savedSettings.itocl,
-          "itoca": savedSettings.itoca,
-          "itocd": savedSettings.itocd,
-          "itoce": savedSettings.itoce,
-          "isf": savedSettings.isf,
-          "isfm": savedSettings.isfm,
-          "isfl": savedSettings.isfl,
-          "isfa": savedSettings.isfa,
-          "isfd": savedSettings.isfd,
-          "isfe": savedSettings.isfe,
-        }).then(() => {
-          console.log("Saved!");
-        })
-      });
+    setObj('factors', savedSettings)
   };
 
-
-  // Create a style object for the input boxes
-  const styles = StyleSheet.create({
-    input: {
-      height: 40,
-      borderWidth: 1,
-      padding: 10,
-      borderRadius: 5,
-      marginBottom: 5,
-    },
-  });
 
   return (
     <KeyboardAvoidingView
@@ -186,22 +108,22 @@ const Settings = () => {
               <Text style={{textAlign: "center"}}>I:C Ratio</Text>
               </View>
               <View style={{marginBottom: 20}}>
-              <TextInput placeholder="General" keyboardType="numeric" value={savedSettings.itoc} onChangeText={(value) => {setSettings({ ...savedSettings, itoc: value }); onSave();}} />
+              <TextInput placeholder="General" keyboardType="numeric" defaultValue={savedSettings.itoc} onChangeText={(value) => {savedSettings = { ...savedSettings, itoc: value }; onSave();}} />
               </View>
               <View style={{marginBottom: 20}}>
-              <TextInput placeholder="Morning" keyboardType="numeric" value={savedSettings.itocm} onChangeText={(value) => {setSettings({ ...savedSettings, itocm: value }); onSave();}} />
+              <TextInput placeholder="Morning" keyboardType="numeric" defaultValue={savedSettings.itocm} onChangeText={(value) => {savedSettings = { ...savedSettings, itocm: value }; onSave();}} />
               </View>
               <View style={{marginBottom: 20}}>
-              <TextInput placeholder="Lunch" keyboardType="numeric" value={savedSettings.itocl} onChangeText={(value) => {setSettings({ ...savedSettings, itocl: value }); onSave();}} />
+              <TextInput placeholder="Lunch" keyboardType="numeric" defaultValue={savedSettings.itocl} onChangeText={(value) => {savedSettings = { ...savedSettings, itocl: value }; onSave();}} />
               </View>
               <View style={{marginBottom: 20}}>
-              <TextInput placeholder="Midday Snack" keyboardType="numeric" value={savedSettings.itoca} onChangeText={(value) => {setSettings({ ...savedSettings, itoca: value }); onSave();}} />
+              <TextInput placeholder="Midday Snack" keyboardType="numeric" defaultValue={savedSettings.itoca} onChangeText={(value) => {savedSettings = { ...savedSettings, itoca: value }; onSave();}} />
               </View>
               <View style={{marginBottom: 20}}>
-              <TextInput placeholder="Dinner" keyboardType="numeric" value={savedSettings.itocd} onChangeText={(value) => {setSettings({ ...savedSettings, itocd: value }); onSave();}} />
+              <TextInput placeholder="Dinner" keyboardType="numeric" defaultValue={savedSettings.itocd} onChangeText={(value) => {savedSettings = { ...savedSettings, itocd: value }; onSave();}} />
               </View>
               <View style={{marginBottom: 20}}>
-              <TextInput placeholder="Night Snack" keyboardType="numeric" value={savedSettings.itoce} onChangeText={(value) => {setSettings({ ...savedSettings, itoce: value }); onSave();}} />
+              <TextInput placeholder="Night Snack" keyboardType="numeric" defaultValue={savedSettings.itoce} onChangeText={(value) => {savedSettings = { ...savedSettings, itoce: value }; onSave();}} />
               </View>
             </SectionContent>
           </Section>
@@ -212,22 +134,22 @@ const Settings = () => {
               <Text style={{textAlign: "center"}}>ISF</Text>
               </View>
               <View style={{marginBottom: 20}}>
-              <TextInput placeholder="General" keyboardType="numeric" value={savedSettings.isf} onChangeText={(value) => {setSettings({ ...savedSettings, isf: value }); onSave();}} />
+              <TextInput placeholder="General" keyboardType="numeric" defaultValue={savedSettings.isf} onChangeText={(value) => {savedSettings = { ...savedSettings, isf: value }; onSave();}} />
               </View>
               <View style={{marginBottom: 20}}>
-              <TextInput placeholder="Morning" keyboardType="numeric" value={savedSettings.isfm} onChangeText={(value) => {setSettings({ ...savedSettings, isfm: value }); onSave();}} />
+              <TextInput placeholder="Morning" keyboardType="numeric" defaultValue={savedSettings.isfm} onChangeText={(value) => {savedSettings = { ...savedSettings, isfm: value }; onSave();}} />
               </View>
               <View style={{marginBottom: 20}}>
-              <TextInput placeholder="Lunch" keyboardType="numeric" value={savedSettings.isfl} onChangeText={(value) => {setSettings({ ...savedSettings, isfl: value }); onSave();}} />
+              <TextInput placeholder="Lunch" keyboardType="numeric" defaultValue={savedSettings.isfl} onChangeText={(value) => {savedSettings = { ...savedSettings, isfl: value }; onSave();}} />
               </View>
               <View style={{marginBottom: 20}}>
-              <TextInput placeholder="Midday Snack" keyboardType="numeric" value={savedSettings.isfa} onChangeText={(value) => {setSettings({ ...savedSettings, isfa: value }); onSave();}} />
+              <TextInput placeholder="Midday Snack" keyboardType="numeric" defaultValue={savedSettings.isfa} onChangeText={(value) => {savedSettings = { ...savedSettings, isfa: value }; onSave();}} />
               </View>
               <View style={{marginBottom: 20}}>
-              <TextInput placeholder="Dinner" keyboardType="numeric" value={savedSettings.isfd} onChangeText={(value) => {setSettings({ ...savedSettings, isfd: value }); onSave();}} />
+              <TextInput placeholder="Dinner" keyboardType="numeric" defaultValue={savedSettings.isfd} onChangeText={(value) => {savedSettings = { ...savedSettings, isfd: value }; onSave();}} />
               </View>
               <View style={{marginBottom: 20}}>
-              <TextInput placeholder="Night Snack" keyboardType="numeric" value={savedSettings.isfe} onChangeText={(value) => {setSettings({ ...savedSettings, isfe: value }); onSave();}} />
+              <TextInput placeholder="Night Snack" keyboardType="numeric" defaultValue={savedSettings.isfe} onChangeText={(value) => {savedSettings = { ...savedSettings, isfe: value }; onSave();}} />
               </View>
             </SectionContent>
           </Section>
