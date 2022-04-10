@@ -1,39 +1,24 @@
-import React from "react";
-import { createStackNavigator } from "@react-navigation/stack";
+// Import necessary libraries
 import { NavigationContainer } from "@react-navigation/native";
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
-
-import Login from "../../screens/login";
-import App from "../../screens/index";
-
-import HomeScreen from '../../screens/home';
+import { createStackNavigator } from "@react-navigation/stack";
+import React from "react";
 import MealsScreen from '../../screens/foods';
+import HomeScreen from '../../screens/home';
+import App from "../../screens/index";
 import InsulinScreen from '../../screens/insulin';
+// Import all of the screens
+import Login from "../../screens/login";
 import RecipesScreen from '../../screens/recipes';
 import SettingsScreen from '../../screens/settings';
 
 
-const get = async (key) => { try { const value = await AsyncStorage.getItem(key); if (value !== null) { try { return JSON.parse(value) } catch { return value } } } catch (e) { console.log(e) } }
 
-
+// Create the navigation stack
 const MainStack = createStackNavigator();
+
 const Main = () => {
-  const linking = {
-    prefixes: [
-      /* your linking prefixes */
-    ],
-    config: {
-      screens: {
-        Login: "login",
-        App: "app"
-      },
-    },
-  };
-
-
   return (
-    <NavigationContainer linking={linking}>
+    <NavigationContainer>
       <MainStack.Navigator
         initialRouteName="Login"
         screenOptions={{
@@ -42,7 +27,7 @@ const Main = () => {
       >
         <MainStack.Screen name="login" component={Login} />
         <MainStack.Screen name="app" component={App} />
-        
+
         <MainStack.Screen name="Home" component={HomeScreen} />
         <MainStack.Screen name="Ingredients" component={MealsScreen} />
         <MainStack.Screen name="Insulin" component={InsulinScreen} />

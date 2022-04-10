@@ -1,34 +1,21 @@
 // Import the libraries required
-import * as React from 'react';
-import { 
-  ScrollView, 
-  ActivityIndicator,
-  View,
-  Pressable,
-  StyleSheet
- } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
-import {
-  Layout,
-  TopNav,
-  Text,
-  TextInput,
-  themeColor,
-  SectionContent,
-  Section,
-  useTheme,
-  Button
-} from "react-native-rapi-ui";
-import { enableScreens } from "react-native-screens";
-import { TouchableOpacity } from "react-native-gesture-handler";
-
-import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
+import axios from 'axios';
+import * as React from 'react';
+import {
+  ScrollView, StyleSheet, View
+} from "react-native";
+import { TouchableOpacity } from "react-native-gesture-handler";
+import {
+  Layout, Text,
+  themeColor, TopNav, useTheme
+} from "react-native-rapi-ui";
+
 
 
 // Initialize the database functions
-const set = async (key, value) => { try { await AsyncStorage.setItem(key, value) } catch (e) { console.log(e) } }
 const setObj = async (key, value) => { try { const jsonValue = JSON.stringify(value); await AsyncStorage.setItem(key, jsonValue) } catch (e) { console.log(e) } }
 const get = async (key) => { try { const value = await AsyncStorage.getItem(key); if (value !== null) { try { return JSON.parse(value) } catch { return value } } } catch (e) { console.log(e) } }
 const delkey = async (key, value) => { try { await AsyncStorage.removeItem(key) } catch (e) { console.log(e) } }
@@ -38,8 +25,6 @@ let isLoading = true;
 
 
 export default App = () => {
-  enableScreens();
-
 
   const navigation = useNavigation();
   // Set the state of the app
@@ -47,6 +32,7 @@ export default App = () => {
   const { isDarkmode, setTheme } = useTheme();
   const [, forceUpdate] = React.useReducer(x => x + 1, 0);
 
+  // Define styles for the screen selection options
   const styles = StyleSheet.create({
     listItem: {
       marginHorizontal: 20,
@@ -59,7 +45,7 @@ export default App = () => {
       alignItems: "center",
     },
   });
-  
+
 
   // Get the login information from the database
   get("login")
@@ -131,7 +117,7 @@ export default App = () => {
 
                     setObj("readings", readings)
 
-                    // FInish loading
+                    // Finish loading
                     isLoading = false;
                   })
                   .catch(error => console.error(error.response))
@@ -145,21 +131,21 @@ export default App = () => {
 
 
   return (
-      <Layout>
+    <Layout>
 
-        {isLoading &&
-          <View flex={1} px="3" style={{
-            flex:1, // Covers the available space
-            justifyContent:"center", // aligns through main axis
-            alignItems:"center" // aligns though secondary axis
+      {isLoading &&
+        <View flex={1} px="3" style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center"
         }}>
-              <Text color={isDarkmode ? themeColor.white100 : themeColor.dark} size="h2">
-                Loading
-              </Text>
-          </View>
-        }
+          <Text color={isDarkmode ? themeColor.white100 : themeColor.dark} size="h2">
+            Loading
+          </Text>
+        </View>
+      }
 
-        {!isLoading &&
+      {!isLoading &&
         <Layout>
           <TopNav
             middleContent="MyT1D"
@@ -235,10 +221,11 @@ export default App = () => {
               </View>
             </TouchableOpacity>
 
-          
-            <TouchableOpacity style={{marginTop: 50}} onPress={() =>  {
-                  delkey("login").then(() => {props.navigation.goBack(); forceUpdate()})
-                }}>
+
+            <TouchableOpacity style={{ marginTop: 50 }} onPress={() => {
+              // Delete the login information, then go back to login
+              delkey("login").then(() => { props.navigation.navigate("Login"); forceUpdate() })
+            }}>
               <View style={styles.listItem}>
                 <Text fontWeight="medium">Logout</Text>
                 <Ionicons
@@ -250,8 +237,8 @@ export default App = () => {
             </TouchableOpacity>
 
           </ScrollView>
-          </Layout>
-        }
-      </Layout>
+        </Layout>
+      }
+    </Layout>
   );
 }

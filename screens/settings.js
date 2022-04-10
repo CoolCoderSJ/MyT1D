@@ -1,30 +1,20 @@
 // Import the libraries needed
-import * as React from "react"
-import {
-  ScrollView,
-  View,
-} from "react-native";
-import { VStack, HStack } from 'react-native-stacks';
 import { Ionicons } from '@expo/vector-icons';
-import {
-  Layout,
-  TopNav,
-  Text,
-  TextInput,
-  themeColor,
-  SectionContent,
-  Section,
-  useTheme,
-  Button,
-  CheckBox
-} from "react-native-rapi-ui";
-import { StyleSheet, KeyboardAvoidingView } from "react-native";
-import { useNavigation } from '@react-navigation/native';
-
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
+import * as React from "react";
+import {
+  KeyboardAvoidingView, ScrollView,
+  View
+} from "react-native";
+import {
+  Layout, Section, SectionContent, Text,
+  TextInput,
+  themeColor, TopNav, useTheme
+} from "react-native-rapi-ui";
+
 
 // Initialize the database functions
-const set = async (key, value) => { try { await AsyncStorage.setItem(key, value) } catch (e) { console.log(e) } }
 const setObj = async (key, value) => { try { const jsonValue = JSON.stringify(value); await AsyncStorage.setItem(key, jsonValue) } catch (e) { console.log(e) } }
 const get = async (key) => { try { const value = await AsyncStorage.getItem(key); if (value !== null) { try { return JSON.parse(value) } catch { return value } } } catch (e) { console.log(e) } }
 
@@ -38,7 +28,7 @@ const Settings = () => {
 
   // Run once the app has loaded
   React.useEffect(() => {
-    // Get the existing factors and set them in the database
+    // Get the existing factors and set them in the field
     get("factors")
       .then(factors => {
         savedSettings = factors
@@ -63,7 +53,7 @@ const Settings = () => {
   }, []);
 
 
-  // Update the database when the user clicks Save
+  // Update the database when the user types anything into any textbox
   const onSave = () => {
     setObj('factors', savedSettings)
   };
@@ -102,54 +92,54 @@ const Settings = () => {
         />
         <ScrollView>
 
-          <Section style={{marginVertical: 20, marginHorizontal: 20}}>
+          <Section style={{ marginVertical: 20, marginHorizontal: 20 }}>
             <SectionContent>
-              <View style={{marginBottom: 20}}>
-              <Text style={{textAlign: "center"}}>I:C Ratio</Text>
+              <View style={{ marginBottom: 20 }}>
+                <Text style={{ textAlign: "center" }}>I:C Ratio</Text>
               </View>
-              <View style={{marginBottom: 20}}>
-              <TextInput placeholder="General" keyboardType="numeric" defaultValue={savedSettings.itoc} onChangeText={(value) => {savedSettings = { ...savedSettings, itoc: value }; onSave();}} />
+              <View style={{ marginBottom: 20 }}>
+                <TextInput placeholder="General" keyboardType="numeric" defaultValue={savedSettings.itoc} onChangeText={(value) => { savedSettings = { ...savedSettings, itoc: value }; onSave(); }} />
               </View>
-              <View style={{marginBottom: 20}}>
-              <TextInput placeholder="Morning" keyboardType="numeric" defaultValue={savedSettings.itocm} onChangeText={(value) => {savedSettings = { ...savedSettings, itocm: value }; onSave();}} />
+              <View style={{ marginBottom: 20 }}>
+                <TextInput placeholder="Morning" keyboardType="numeric" defaultValue={savedSettings.itocm} onChangeText={(value) => { savedSettings = { ...savedSettings, itocm: value }; onSave(); }} />
               </View>
-              <View style={{marginBottom: 20}}>
-              <TextInput placeholder="Lunch" keyboardType="numeric" defaultValue={savedSettings.itocl} onChangeText={(value) => {savedSettings = { ...savedSettings, itocl: value }; onSave();}} />
+              <View style={{ marginBottom: 20 }}>
+                <TextInput placeholder="Lunch" keyboardType="numeric" defaultValue={savedSettings.itocl} onChangeText={(value) => { savedSettings = { ...savedSettings, itocl: value }; onSave(); }} />
               </View>
-              <View style={{marginBottom: 20}}>
-              <TextInput placeholder="Midday Snack" keyboardType="numeric" defaultValue={savedSettings.itoca} onChangeText={(value) => {savedSettings = { ...savedSettings, itoca: value }; onSave();}} />
+              <View style={{ marginBottom: 20 }}>
+                <TextInput placeholder="Midday Snack" keyboardType="numeric" defaultValue={savedSettings.itoca} onChangeText={(value) => { savedSettings = { ...savedSettings, itoca: value }; onSave(); }} />
               </View>
-              <View style={{marginBottom: 20}}>
-              <TextInput placeholder="Dinner" keyboardType="numeric" defaultValue={savedSettings.itocd} onChangeText={(value) => {savedSettings = { ...savedSettings, itocd: value }; onSave();}} />
+              <View style={{ marginBottom: 20 }}>
+                <TextInput placeholder="Dinner" keyboardType="numeric" defaultValue={savedSettings.itocd} onChangeText={(value) => { savedSettings = { ...savedSettings, itocd: value }; onSave(); }} />
               </View>
-              <View style={{marginBottom: 20}}>
-              <TextInput placeholder="Night Snack" keyboardType="numeric" defaultValue={savedSettings.itoce} onChangeText={(value) => {savedSettings = { ...savedSettings, itoce: value }; onSave();}} />
+              <View style={{ marginBottom: 20 }}>
+                <TextInput placeholder="Night Snack" keyboardType="numeric" defaultValue={savedSettings.itoce} onChangeText={(value) => { savedSettings = { ...savedSettings, itoce: value }; onSave(); }} />
               </View>
             </SectionContent>
           </Section>
 
-          <Section style={{marginBottom: 20, marginHorizontal: 20}}>
+          <Section style={{ marginBottom: 20, marginHorizontal: 20 }}>
             <SectionContent>
-              <View style={{marginBottom: 20}}>
-              <Text style={{textAlign: "center"}}>ISF</Text>
+              <View style={{ marginBottom: 20 }}>
+                <Text style={{ textAlign: "center" }}>ISF</Text>
               </View>
-              <View style={{marginBottom: 20}}>
-              <TextInput placeholder="General" keyboardType="numeric" defaultValue={savedSettings.isf} onChangeText={(value) => {savedSettings = { ...savedSettings, isf: value }; onSave();}} />
+              <View style={{ marginBottom: 20 }}>
+                <TextInput placeholder="General" keyboardType="numeric" defaultValue={savedSettings.isf} onChangeText={(value) => { savedSettings = { ...savedSettings, isf: value }; onSave(); }} />
               </View>
-              <View style={{marginBottom: 20}}>
-              <TextInput placeholder="Morning" keyboardType="numeric" defaultValue={savedSettings.isfm} onChangeText={(value) => {savedSettings = { ...savedSettings, isfm: value }; onSave();}} />
+              <View style={{ marginBottom: 20 }}>
+                <TextInput placeholder="Morning" keyboardType="numeric" defaultValue={savedSettings.isfm} onChangeText={(value) => { savedSettings = { ...savedSettings, isfm: value }; onSave(); }} />
               </View>
-              <View style={{marginBottom: 20}}>
-              <TextInput placeholder="Lunch" keyboardType="numeric" defaultValue={savedSettings.isfl} onChangeText={(value) => {savedSettings = { ...savedSettings, isfl: value }; onSave();}} />
+              <View style={{ marginBottom: 20 }}>
+                <TextInput placeholder="Lunch" keyboardType="numeric" defaultValue={savedSettings.isfl} onChangeText={(value) => { savedSettings = { ...savedSettings, isfl: value }; onSave(); }} />
               </View>
-              <View style={{marginBottom: 20}}>
-              <TextInput placeholder="Midday Snack" keyboardType="numeric" defaultValue={savedSettings.isfa} onChangeText={(value) => {savedSettings = { ...savedSettings, isfa: value }; onSave();}} />
+              <View style={{ marginBottom: 20 }}>
+                <TextInput placeholder="Midday Snack" keyboardType="numeric" defaultValue={savedSettings.isfa} onChangeText={(value) => { savedSettings = { ...savedSettings, isfa: value }; onSave(); }} />
               </View>
-              <View style={{marginBottom: 20}}>
-              <TextInput placeholder="Dinner" keyboardType="numeric" defaultValue={savedSettings.isfd} onChangeText={(value) => {savedSettings = { ...savedSettings, isfd: value }; onSave();}} />
+              <View style={{ marginBottom: 20 }}>
+                <TextInput placeholder="Dinner" keyboardType="numeric" defaultValue={savedSettings.isfd} onChangeText={(value) => { savedSettings = { ...savedSettings, isfd: value }; onSave(); }} />
               </View>
-              <View style={{marginBottom: 20}}>
-              <TextInput placeholder="Night Snack" keyboardType="numeric" defaultValue={savedSettings.isfe} onChangeText={(value) => {savedSettings = { ...savedSettings, isfe: value }; onSave();}} />
+              <View style={{ marginBottom: 20 }}>
+                <TextInput placeholder="Night Snack" keyboardType="numeric" defaultValue={savedSettings.isfe} onChangeText={(value) => { savedSettings = { ...savedSettings, isfe: value }; onSave(); }} />
               </View>
             </SectionContent>
           </Section>

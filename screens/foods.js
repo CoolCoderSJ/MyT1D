@@ -1,31 +1,19 @@
 // Import the libraries needed
-import * as React from "react"
-import { StyleSheet, KeyboardAvoidingView } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
-
-import { 
-  ScrollView, 
-  ActivityIndicator,
-  View,
-  Pressable
-} from "react-native";
-
-import { VStack, HStack, Spacer } from 'react-native-stacks';
-
-import {
-  Layout,
-  TopNav,
-  Text,
-  TextInput,
-  themeColor,
-  SectionContent,
-  Section,
-  useTheme,
-  Button
-} from "react-native-rapi-ui";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
 import { useNavigation } from '@react-navigation/native';
+import * as React from "react";
+import {
+  KeyboardAvoidingView, ScrollView,
+  View
+} from "react-native";
+import {
+  Button, Layout, Section, SectionContent, TextInput,
+  themeColor, TopNav, useTheme
+} from "react-native-rapi-ui";
+
+
+
 
 
 // Initialize the database functions
@@ -33,6 +21,7 @@ const set = async (key, value) => { try { await AsyncStorage.setItem(key, value)
 const setObj = async (key, value) => { try { const jsonValue = JSON.stringify(value); await AsyncStorage.setItem(key, jsonValue) } catch (e) { console.log(e) } }
 const get = async (key) => { try { const value = await AsyncStorage.getItem(key); if (value !== null) { try { return JSON.parse(value) } catch { return value } } } catch (e) { console.log(e) } }
 
+// Initialize the variables
 let filterAllowed = []
 
 export default function App() {
@@ -122,127 +111,133 @@ export default function App() {
       style={{ flex: 1 }}
     >
 
-<Layout>
-    <TopNav
-    leftContent={
-      <Ionicons
-        name="chevron-back"
-        size={20}
-        color={isDarkmode ? themeColor.white : themeColor.black}
-      />
-    }
-      leftAction={() => navigation.goBack()}
-      middleContent="Ingredients"
-      rightContent={
-        <Ionicons
-          name={isDarkmode ? "sunny" : "moon"}
-          size={20}
-          color={isDarkmode ? themeColor.white100 : themeColor.dark}
-        />
-      }
-      rightAction={() => {
-        if (isDarkmode) {
-          setTheme("light");
-        } else {
-          setTheme("dark");
-        }
-      }}
-    />
-    <ScrollView>
-    <View
-    style={{
-      marginHorizontal: 20,
-      marginVertical: 20,
-    }}
-    >
-    <TextInput
-      placeholder="Search..."
-      leftContent={
-        <Ionicons
-          name="search-circle"
-          size={20}
-          color={themeColor.gray300}
-        />
-      }
-      onChangeText={e => {
-        let values = [...fields];
-        let allowed = []
-        for (let i=0; i<values.length; i++) {
-          if (values[i].meal.toLowerCase().includes(e.toLowerCase())) {
-            allowed.push(i);
+      <Layout>
+        <TopNav
+          leftContent={
+            <Ionicons
+              name="chevron-back"
+              size={20}
+              color={isDarkmode ? themeColor.white : themeColor.black}
+            />
           }
-        }
-
-        filterAllowed = allowed;
-        forceUpdate();
-      }}
-    />
-    </View>
-
-      {
-        fields.map((field, idx) => {
-          return (
-            <View>
-            {filterAllowed.includes(idx) &&
-            
-          <Section style={{ marginHorizontal: 20, marginTop: 20 }}>
-          <SectionContent>
-            <View style={{ marginBottom: 20 }}>
-            <TextInput
-              placeholder="Ingredient name"
-              onChangeText={e => handleChange(idx, "meal", e)}
-              defaultValue={field.meal}
+          leftAction={() => navigation.goBack()}
+          middleContent="Ingredients"
+          rightContent={
+            <Ionicons
+              name={isDarkmode ? "sunny" : "moon"}
+              size={20}
+              color={isDarkmode ? themeColor.white100 : themeColor.dark}
             />
-              </View>
-
-              <View style={{ marginBottom: 20 }}>
-              <TextInput
-                placeholder="Carbs"
-                onChangeText={e => handleChange(idx, "carbs", e)}
-                defaultValue={field.carbs}
-                keyboardType="numeric"
-              />
-              </View>
-
-              <View style={{ marginBottom: 20 }}>
-              <TextInput
-                placeholder="Unit (e.g. cup, oz, etc.)"
-                onChangeText={e => handleChange(idx, "unit", e)}
-                defaultValue={field.unit}
-              />
-              </View>
-
-              <View>
-              <Button
-              style={{ marginTop: 10 }}
-              leftContent={
-                <Ionicons name="trash-outline" size={20} color={themeColor.white} />
-              }
-              text="Remove"
-              status="danger"
-              type="TouchableOpacity"
-              onPress={() => {handleRemove(idx)}}
-            />
-              </View>
-          </SectionContent>
-          </Section>
+          }
+          rightAction={() => {
+            if (isDarkmode) {
+              setTheme("light");
+            } else {
+              setTheme("dark");
             }
-            </View>
-          )
-        })
-      }
-      <Button
-        style={{ marginVertical: 10, marginHorizontal: 20 }}
-        leftContent={
-          <Ionicons name="add-circle-outline" size={20} color={themeColor.white} />
-        }
-        text="Add New Ingredient"
-        status="primary"
-        type="TouchableOpacity"
-        onPress={handleAdd}
-      />
-    </ScrollView>
-    </Layout>
+          }}
+        />
+        <ScrollView>
+          <View
+            style={{
+              marginHorizontal: 20,
+              marginVertical: 20,
+            }}
+          >
+            <TextInput
+              placeholder="Search..."
+              leftContent={
+                <Ionicons
+                  name="search-circle"
+                  size={20}
+                  color={themeColor.gray300}
+                />
+              }
+              onChangeText={e => {
+                // When something is searched, get all ingredients
+                let values = [...fields];
+                // Clean the filter list
+                let allowed = []
+                // Loop through all the ingredients
+                for (let i = 0; i < values.length; i++) {
+                  // If the ingredient contains the search term
+                  if (values[i].meal.toLowerCase().includes(e.toLowerCase())) {
+                    // Add the ingredient to the filter list
+                    allowed.push(i);
+                  }
+                }
+
+                // Set the filter list
+                filterAllowed = allowed;
+                forceUpdate();
+              }}
+            />
+          </View>
+
+          {
+            fields.map((field, idx) => {
+              return (
+                <View>
+                  {filterAllowed.includes(idx) &&
+
+                    <Section style={{ marginHorizontal: 20, marginTop: 20 }}>
+                      <SectionContent>
+                        <View style={{ marginBottom: 20 }}>
+                          <TextInput
+                            placeholder="Ingredient name"
+                            onChangeText={e => handleChange(idx, "meal", e)}
+                            defaultValue={field.meal}
+                          />
+                        </View>
+
+                        <View style={{ marginBottom: 20 }}>
+                          <TextInput
+                            placeholder="Carbs"
+                            onChangeText={e => handleChange(idx, "carbs", e)}
+                            defaultValue={field.carbs}
+                            keyboardType="numeric"
+                          />
+                        </View>
+
+                        <View style={{ marginBottom: 20 }}>
+                          <TextInput
+                            placeholder="Unit (e.g. cup, oz, etc.)"
+                            onChangeText={e => handleChange(idx, "unit", e)}
+                            defaultValue={field.unit}
+                          />
+                        </View>
+
+                        <View>
+                          <Button
+                            style={{ marginTop: 10 }}
+                            leftContent={
+                              <Ionicons name="trash-outline" size={20} color={themeColor.white} />
+                            }
+                            text="Remove"
+                            status="danger"
+                            type="TouchableOpacity"
+                            onPress={() => { handleRemove(idx) }}
+                          />
+                        </View>
+                      </SectionContent>
+                    </Section>
+                  }
+                </View>
+              )
+            })
+          }
+          <Button
+            style={{ marginVertical: 10, marginHorizontal: 20 }}
+            leftContent={
+              <Ionicons name="add-circle-outline" size={20} color={themeColor.white} />
+            }
+            text="Add New Ingredient"
+            status="primary"
+            type="TouchableOpacity"
+            onPress={handleAdd}
+          />
+        </ScrollView>
+      </Layout>
     </KeyboardAvoidingView>
   );
 }

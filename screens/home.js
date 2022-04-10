@@ -1,36 +1,20 @@
 // Import all libraries required
-import * as React from 'react';
-import { 
-  ScrollView, 
-  ActivityIndicator,
-  View,
-  Pressable
- } from "react-native";
-import { VStack, HStack } from 'react-native-stacks';
 import { Ionicons } from '@expo/vector-icons';
-import {
-  Layout,
-  TopNav,
-  Text,
-  TextInput,
-  themeColor,
-  SectionContent,
-  Section,
-  useTheme,
-  Button
-} from "react-native-rapi-ui";
-import { enableScreens } from "react-native-screens";
-
-
-import { Dimensions } from "react-native";
-import { LineChart } from "react-native-chart-kit";
-import Arrow from 'react-native-arrow';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
+import * as React from 'react';
+import {
+  Dimensions, ScrollView,
+  View
+} from "react-native";
+import { LineChart } from "react-native-chart-kit";
+import {
+  Layout, Section, SectionContent, Text,
+  themeColor, TopNav, useTheme
+} from "react-native-rapi-ui";
+
 
 // Initialize the database operations
-const set = async (key, value) => { try { await AsyncStorage.setItem(key, value) } catch (e) { console.log(e) } }
-const setObj = async (key, value) => { try { const jsonValue = JSON.stringify(value); await AsyncStorage.setItem(key, jsonValue) } catch (e) { console.log(e) } }
 const get = async (key) => { try { const value = await AsyncStorage.getItem(key); if (value !== null) { try { return JSON.parse(value) } catch { return value } } } catch (e) { console.log(e) } }
 const getAll = async () => { try { const keys = await AsyncStorage.getAllKeys(); return keys } catch (error) { console.error(error) } }
 
@@ -139,133 +123,133 @@ function Home() {
 
   return (
     <Layout>
-    <TopNav
-    leftContent={
-      <Ionicons
-        name="chevron-back"
-        size={20}
-        color={isDarkmode ? themeColor.white : themeColor.black}
-      />
-    }
-      leftAction={() => navigation.goBack()}
-      middleContent="Home"
-      rightContent={
-        <Ionicons
-          name={isDarkmode ? "sunny" : "moon"}
-          size={20}
-          color={isDarkmode ? themeColor.white100 : themeColor.dark}
-        />
-      }
-      rightAction={() => {
-        if (isDarkmode) {
-          setTheme("light");
-        } else {
-          setTheme("dark");
+      <TopNav
+        leftContent={
+          <Ionicons
+            name="chevron-back"
+            size={20}
+            color={isDarkmode ? themeColor.white : themeColor.black}
+          />
         }
-      }}
-    />
-    <ScrollView>
-      <Section style={{ marginHorizontal: 20, marginTop: 20 }}>
-        <SectionContent>
-          <View style={{ marginBottom: 20 }}>
-          <Text size="xl" style={{ textAlign: 'center' }}>Current Glucose Value-
-            <Text size="xl" style={{ textAlign: 'center' }}>
-              {first_value} <Text size='h1'>{arrow}</Text>
-            </Text>
-          </Text>
-          </View>
-
-        </SectionContent>
-      </Section>
-
-      <Section style={{ marginHorizontal: 20, marginTop: 20 }}>
-        <SectionContent>
-          <View style={{ marginBottom: 20 }}>
-          <Text pb="4" size="xl" style={{ textAlign: 'center' }}>Sugar At Last Recorded Meal- <Text color="warning.800">{sugarValues}</Text></Text>
-          </View>
-
-        </SectionContent>
-      </Section>
-
-      <Section style={{ marginHorizontal: 20, marginTop: 20 }}>
-        <SectionContent>
-          <View style={{ marginBottom: 20 }}>
-          <Text size="md" style={{ textAlign: 'center' }}>mg/dl over the past 2 hours-</Text>
-
-          </View>
-          {first_value != "Loading..." &&
-            <View>
-              <LineChart
-                data={{
-                  labels: ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
-                  datasets: [
-                    {
-                      data: readingValues
-                    }
-                  ]
-                }}
-                width={Dimensions.get("window").width - (Dimensions.get("window").width - 300)}
-                height={325}
-                chartConfig={{
-                  backgroundColor: isDarkmode ?  "rgb(38, 40, 52, 1)" : "rgb(247, 247, 247, 1)",
-                  backgroundGradientFrom: isDarkmode ?  "rgb(38, 40, 52, 1)" : "rgb(247, 247, 247, 1)",
-                  backgroundGradientTo: isDarkmode ?  "rgb(38, 40, 52, 1)" : "rgb(247, 247, 247, 1)",
-                  decimalPlaces: 0,
-                  color: (opacity = 1) => {`rgb(255, 255, 255, ${opacity})`},
-                  labelColor: (opacity = 1) => {`rgb(255, 255, 255, ${opacity})`},
-                  style: {
-                    borderRadius: 16,
-                  },
-                  propsForDots: {
-                    r: "3",
-                    strokeWidth: "1",
-                    stroke: "#06b6d4"
-                  },
-                  propsForLabels: {
-                    fill: "white"
-                  }
-                }}
-                bezier
-                style={{
-                  borderRadius: 16,
-                  padding: 10
-                }}
-              />
-            </View>
+        leftAction={() => navigation.goBack()}
+        middleContent="Home"
+        rightContent={
+          <Ionicons
+            name={isDarkmode ? "sunny" : "moon"}
+            size={20}
+            color={isDarkmode ? themeColor.white100 : themeColor.dark}
+          />
+        }
+        rightAction={() => {
+          if (isDarkmode) {
+            setTheme("light");
+          } else {
+            setTheme("dark");
           }
-          <View>
-
-          </View>
-        </SectionContent>
-      </Section>
-
-      <Section style={{ marginHorizontal: 20, marginTop: 20 }}>
-        <SectionContent>
-          <View style={{ marginBottom: 20 }}>
-          <Text size="md" ml="-1" textAlign="center">
-                  Foods Stored
+        }}
+      />
+      <ScrollView>
+        <Section style={{ marginHorizontal: 20, marginTop: 20 }}>
+          <SectionContent>
+            <View style={{ marginBottom: 20 }}>
+              <Text size="xl" style={{ textAlign: 'center' }}>Current Glucose Value-
+                <Text size="xl" style={{ textAlign: 'center' }}>
+                  {first_value} <Text size='h1'>{arrow}</Text>
                 </Text>
+              </Text>
+            </View>
+
+          </SectionContent>
+        </Section>
+
+        <Section style={{ marginHorizontal: 20, marginTop: 20 }}>
+          <SectionContent>
+            <View style={{ marginBottom: 20 }}>
+              <Text pb="4" size="xl" style={{ textAlign: 'center' }}>Sugar At Last Recorded Meal- <Text color="warning.800">{sugarValues}</Text></Text>
+            </View>
+
+          </SectionContent>
+        </Section>
+
+        <Section style={{ marginHorizontal: 20, marginTop: 20 }}>
+          <SectionContent>
+            <View style={{ marginBottom: 20 }}>
+              <Text size="md" style={{ textAlign: 'center' }}>mg/dl over the past 2 hours-</Text>
+
+            </View>
+            {first_value != "Loading..." &&
+              <View>
+                <LineChart
+                  data={{
+                    labels: ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+                    datasets: [
+                      {
+                        data: readingValues
+                      }
+                    ]
+                  }}
+                  width={Dimensions.get("window").width - (Dimensions.get("window").width - 300)}
+                  height={325}
+                  chartConfig={{
+                    backgroundColor: isDarkmode ? "rgb(38, 40, 52, 1)" : "rgb(247, 247, 247, 1)",
+                    backgroundGradientFrom: isDarkmode ? "rgb(38, 40, 52, 1)" : "rgb(247, 247, 247, 1)",
+                    backgroundGradientTo: isDarkmode ? "rgb(38, 40, 52, 1)" : "rgb(247, 247, 247, 1)",
+                    decimalPlaces: 0,
+                    color: (opacity = 1) => { `rgb(255, 255, 255, ${opacity})` },
+                    labelColor: (opacity = 1) => { `rgb(255, 255, 255, ${opacity})` },
+                    style: {
+                      borderRadius: 16,
+                    },
+                    propsForDots: {
+                      r: "3",
+                      strokeWidth: "1",
+                      stroke: "#06b6d4"
+                    },
+                    propsForLabels: {
+                      fill: "white"
+                    }
+                  }}
+                  bezier
+                  style={{
+                    borderRadius: 16,
+                    padding: 10
+                  }}
+                />
+              </View>
+            }
+            <View>
+
+            </View>
+          </SectionContent>
+        </Section>
+
+        <Section style={{ marginHorizontal: 20, marginTop: 20 }}>
+          <SectionContent>
+            <View style={{ marginBottom: 20 }}>
+              <Text size="md" ml="-1" textAlign="center">
+                Foods Stored
+              </Text>
               <Text fontWeight="400" textAlign="center">
                 {foods}
               </Text>
-          </View>
-        </SectionContent>
-      </Section>
+            </View>
+          </SectionContent>
+        </Section>
 
-      <Section style={{ marginHorizontal: 20, marginTop: 20 }}>
-        <SectionContent>
-          <View style={{ marginBottom: 20 }}>
-          <Text size="md" ml="-1" textAlign="center">
-                  Recipes Stored
-                </Text>
+        <Section style={{ marginHorizontal: 20, marginTop: 20 }}>
+          <SectionContent>
+            <View style={{ marginBottom: 20 }}>
+              <Text size="md" ml="-1" textAlign="center">
+                Recipes Stored
+              </Text>
               <Text fontWeight="400" textAlign="center">
                 {recipeCount}
               </Text>
-          </View>
-        </SectionContent>
-      </Section>
-    </ScrollView>
-  </Layout>
+            </View>
+          </SectionContent>
+        </Section>
+      </ScrollView>
+    </Layout>
   );
 }
 

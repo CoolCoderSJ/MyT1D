@@ -1,3 +1,4 @@
+// Import necessary libraries
 import * as React from "react"
 import { ThemeProvider } from "react-native-rapi-ui";
 import Navigator from "./navigation/main";

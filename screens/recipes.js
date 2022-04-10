@@ -1,32 +1,19 @@
 // Import the libraries needed
-import * as React from "react"
-import { StyleSheet, KeyboardAvoidingView } from "react-native";
-import {
-  ScrollView,
-  View,
-} from "react-native";
-import { VStack, HStack } from 'react-native-stacks';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
+import * as React from "react";
+import { KeyboardAvoidingView, ScrollView, StyleSheet, View } from "react-native";
+import { AutocompleteDropdown } from 'react-native-autocomplete-dropdown';
+import { TouchableOpacity } from "react-native-gesture-handler";
 import {
-  Layout,
-  TopNav,
-  Text,
+  Button, Layout, Section, SectionContent, Text,
   TextInput,
-  themeColor,
-  SectionContent,
-  Section,
-  useTheme,
-  Button,
-  CheckBox
+  themeColor, TopNav, useTheme
 } from "react-native-rapi-ui";
 
-import { TouchableOpacity } from "react-native-gesture-handler";
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AutocompleteDropdown } from 'react-native-autocomplete-dropdown'
-import { useNavigation } from '@react-navigation/native';
 
 // Initialize the database functions
-const set = async (key, value) => { try { await AsyncStorage.setItem(key, value) } catch (e) { console.log(e) } }
 const setObj = async (key, value) => { try { const jsonValue = JSON.stringify(value); await AsyncStorage.setItem(key, jsonValue) } catch (e) { console.log(e) } }
 const get = async (key) => { try { const value = await AsyncStorage.getItem(key); if (value !== null) { try { return JSON.parse(value) } catch { return value } } } catch (e) { console.log(e) } }
 
@@ -406,7 +393,7 @@ export default function App() {
                               fontFamily: "Ubuntu_400Regular",
                             }
                           }}
-  
+
                           rightButtonsContainerStyle={{
                             backgroundColor: isDarkmode ? "#262834" : themeColor.white,
                             borderColor: isDarkmode ? "#60647e" : "#d8d8d8",

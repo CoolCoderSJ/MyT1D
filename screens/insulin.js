@@ -1,34 +1,21 @@
 // Import the libraries needed
-import * as React from "react"
-import { StyleSheet, KeyboardAvoidingView } from "react-native";
-import {
-  ScrollView,
-  ActivityIndicator,
-  View,
-  Pressable,
-  Switch
-} from "react-native";
-import { VStack, HStack } from 'react-native-stacks';
 import { Ionicons } from '@expo/vector-icons';
-import {
-  Layout,
-  TopNav,
-  Text,
-  TextInput,
-  themeColor,
-  SectionContent,
-  Section,
-  useTheme,
-  Button,
-  CheckBox
-} from "react-native-rapi-ui";
-
-import { TouchableOpacity } from "react-native-gesture-handler";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AutocompleteDropdown } from 'react-native-autocomplete-dropdown'
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { ma } from 'moving-averages';
 import { useNavigation } from '@react-navigation/native';
+import { ma } from 'moving-averages';
+import * as React from "react";
+import { KeyboardAvoidingView, ScrollView, StyleSheet, View } from "react-native";
+import { AutocompleteDropdown } from 'react-native-autocomplete-dropdown';
+import { TouchableOpacity } from "react-native-gesture-handler";
+import {
+  Button,
+  CheckBox, Layout, Section, SectionContent, Text,
+  TextInput,
+  themeColor, TopNav, useTheme
+} from "react-native-rapi-ui";
+import { HStack } from 'react-native-stacks';
+
 
 
 // Initialize the database functions
@@ -77,8 +64,9 @@ export default function App() {
   const [showSearchScreen, setshowSearchScreen] = React.useState(false);
 
 
-  const fetchMeals = (mealid=undefined) => {
+  const fetchMeals = (mealid = undefined) => {
     let idtofetch = null;
+    // If a meal id to fetch is not specified, generate an id using the current set date and the current set meal
     if (mealid) {
       idtofetch = mealid
     }
@@ -125,7 +113,6 @@ export default function App() {
 
                           get(`${nextId}metadata`)
                             .then((result) => {
-                              console.log(usedMealId, currentval, nextId, result)
                               if (result) {
                                 if (result.dexVal) {
                                   sugarValueList.push(currentval - result.dexVal)
@@ -285,7 +272,6 @@ export default function App() {
           if (metadata) {
             if (metadata.dexVal) {
               lastSugarValue = metadata.dexVal;
-              console.log(metadata.dexVal, lastSugarValue)
               forceUpdate()
             }
           }
@@ -298,10 +284,13 @@ export default function App() {
     });
   }
 
+  // When the method to specifically save the metadata is called
   const updateInsulinDB = () => {
+    // Get the current dexcom value
     get("readings").then((result) => {
       readings = result;
       let dexVal = readings[0].value;
+      // Calculate carbs
       totalCarb = 0;
       for (let i = 0; i < fields.length; i++) {
         if (fields[i].carbs) {
@@ -323,8 +312,6 @@ export default function App() {
 
   // What happens when an ingredient is changed
   function handleChange(i, type, value) {
-
-    console.log(i, type, value)
 
     // If there is no value to update, skip function
     if (value == null || value == undefined) {
@@ -381,11 +368,14 @@ export default function App() {
                 "NightSnack": "Breakfast",
               }
 
+              // Make a list where all sugar values for the meals will be stored
               let sugarValueList = [];
 
+              // Loop through all meals in the used meals list attached to the food
               for (let j = 0; j < foods[a]['usedMeals'].length; j++) {
                 let usedMealId = foods[a]['usedMeals'][j];
 
+                // Get the sugar value for the meal
                 let nextId = `${usedMealId.split(".")[0]}.${usedMealId.split(".")[1]}.${usedMealId.split(".")[2]}.${usedMealId.split(".")[3]}.${mealMap[usedMealId.split(".")[4]]}`;
 
                 let currentval = 0;
@@ -397,7 +387,6 @@ export default function App() {
 
                       get(`${nextId}metadata`)
                         .then((result) => {
-                          console.log(nextId, result)
                           if (result) {
                             if (result.dexVal) {
                               sugarValueList.push(currentval - result.dexVal)
@@ -406,7 +395,6 @@ export default function App() {
                         })
                         .then(() => {
                           // If there were any ingredients found
-                          console.log(sugarValueList)
                           if (sugarValueList && sugarValueList.length > 0) {
                             // Get a moving average of all of the previous sugar values
                             let averages = ma(sugarValueList, sugarValueList.length);
@@ -420,8 +408,7 @@ export default function App() {
                             else {
                               amount = `${0 - 1 * prediction} lower`
                             }
-                            
-                            console.log("show alert")
+
                             showAlert = true;
                           }
 
@@ -441,13 +428,13 @@ export default function App() {
       }
 
       // Update the foods database
-    setObj("meals", foods);
+      setObj("meals", foods);
 
-    // Update the state
-    setFields(values);
+      // Update the state
+      setFields(values);
 
-    // Update the meals database then calculate the insulin
-    setObj(id, values).then(() => calculateInsulin());
+      // Update the meals database then calculate the insulin
+      setObj(id, values).then(() => calculateInsulin());
 
     })
 
@@ -479,14 +466,20 @@ export default function App() {
   // Update the dropdown data every time the user comes back to this screen from another
   React.useEffect(() => {
     const setDropDownListData = () => {
+
+      // Make a list of all of the ingredients ever used in any meal
+      // Used later for searching
       getAll().then(function (result) {
         allMeals = [];
-        console.log(result)
+
+        // For each database key
         for (let i = 0; i < result.length; i++) {
+          // If the key refers to a meal
           if (result[i].includes("meal") && !result[i].includes("metadata") && result != "meals") {
             get(result[i]).then(function (data) {
               if (data && !result[i].includes("meals") && (result[i].includes("Breakfast") || result[i].includes("Lunch") || result[i].includes("PMSnack") || result[i].includes("Dinner") || result[i].includes("NightSnack"))) {
-                for (let a=0; a<data.length; a++) {
+                for (let a = 0; a < data.length; a++) {
+                  // Add it to the list
                   let obj = {
                     meal: data[a].meal,
                     carbs: data[a].carbs,
@@ -500,6 +493,7 @@ export default function App() {
         }
       });
 
+      // Fetch ingredients and recipes to show in the dropdown
       let meals = [];
       let carbFood = [];
 
@@ -546,6 +540,7 @@ export default function App() {
     setShow(true);
   }
 
+  // Create a style object for the main menu selections
   const styles = StyleSheet.create({
     listItem: {
       marginHorizontal: 20,
@@ -691,18 +686,16 @@ export default function App() {
 
             <Button style={{ marginHorizontal: 20 }} text="All Meal Options" status="primary" onPress={() => { setShowInsulinEditor(false) }} />
 
-            <Text size="h3" style={{marginHorizontal: 20, textAlign: "center", marginVertical: 20}}>{meal}</Text>
+            <Text size="h3" style={{ marginHorizontal: 20, textAlign: "center", marginVertical: 20 }}>{meal}</Text>
 
             {fields.map((field, idx) => {
 
 
-              
+
               if (field['mainMeal'] == true) {
                 mainMealSelected = true;
                 mainMeal = idx;
               }
-
-              console.log(showAlert, mainMeal)
 
               return (
                 <Section style={{ marginHorizontal: 20, marginTop: 20 }}>
@@ -747,7 +740,7 @@ export default function App() {
                         closeOnBlur={false}
                         closeOnSubmit={true}
                         dataSet={filterList}
-                        onChangeText={e => {handleChange(idx, "meal", e)}}
+                        onChangeText={e => { handleChange(idx, "meal", e) }}
                         onClear={() => handleRemove(idx)}
                         onSelectItem={(item) => {
                           if (item) {
@@ -902,8 +895,8 @@ export default function App() {
                     Total Units: {totalUnits}
                   </Text>
                 </View>
-                <View style={{marginVertical: 10}}>
-                <Button style={{ marginHorizontal: 20, marginVertical: 10 }} text="Update Metadata in the Database" status="primary" onPress={() => { updateInsulinDB(); }} />
+                <View style={{ marginVertical: 10 }}>
+                  <Button style={{ marginHorizontal: 20, marginVertical: 10 }} text="Update Metadata in the Database" status="primary" onPress={() => { updateInsulinDB(); }} />
                 </View>
               </SectionContent>
             </Section>
@@ -915,44 +908,45 @@ export default function App() {
             <Button style={{ marginHorizontal: 20, marginVertical: 10 }} text="All Options" status="primary" onPress={() => { setShowInsulinEditor(false); setshowSearchScreen(false); }} />
 
             <View
-                style={{
-                  marginHorizontal: 20,
-                  marginVertical: 20,
-                }}
-              >
-            <TextInput
-              placeholder="Search..."
-              leftContent={
-                <Ionicons
-                  name="search-circle"
-                  size={20}
-                  color={themeColor.gray300}
-                />
-              }
-              onChangeText={e => {
-                if (e == "") {
-                  mealFilter = []
-                  forceUpdate();
-                  return
-                }
-                mealFilter = [];
-                console.log(allMeals)
-                for (let i=0; i<allMeals.length; i++) {
-                  if (allMeals[i].meal.toLowerCase().includes(e.toLowerCase())) {
-
-                    let date = new Date(allMeals[i].mealid.split(".")[3], Number(allMeals[i].mealid.split(".")[1])-1, allMeals[i].mealid.split(".")[2])
-                    mealFilter.push({
-                      title: allMeals[i].meal,
-                      carb: allMeals[i].carbs,
-                      mealid: allMeals[i].mealid,
-                      date: date,
-                      meal: allMeals[i].mealid.split(".")[4],
-                    })
-                  }
-                }
-                forceUpdate();
+              style={{
+                marginHorizontal: 20,
+                marginVertical: 20,
               }}
-            />
+            >
+              <TextInput
+                placeholder="Search..."
+                leftContent={
+                  <Ionicons
+                    name="search-circle"
+                    size={20}
+                    color={themeColor.gray300}
+                  />
+                }
+                onChangeText={e => {
+                  if (e == "") {
+                    mealFilter = []
+                    forceUpdate();
+                    return
+                  }
+                  mealFilter = [];
+
+                  // Loop through all of the ingredients and add the ones that match the search term to a filter list
+                  for (let i = 0; i < allMeals.length; i++) {
+                    if (allMeals[i].meal.toLowerCase().includes(e.toLowerCase())) {
+
+                      let date = new Date(allMeals[i].mealid.split(".")[3], Number(allMeals[i].mealid.split(".")[1]) - 1, allMeals[i].mealid.split(".")[2])
+                      mealFilter.push({
+                        title: allMeals[i].meal,
+                        carb: allMeals[i].carbs,
+                        mealid: allMeals[i].mealid,
+                        date: date,
+                        meal: allMeals[i].mealid.split(".")[4],
+                      })
+                    }
+                  }
+                  forceUpdate();
+                }}
+              />
             </View>
 
 
@@ -960,16 +954,16 @@ export default function App() {
               return (
                 <Section key={idx} style={{ marginBottom: 20, marginHorizontal: 20 }}>
                   <SectionContent>
-                    <View style={{marginBottom: 20}}>
+                    <View style={{ marginBottom: 20 }}>
                       <Text size="h3">{field.title}</Text>
                     </View>
-                    <View style={{marginBottom: 20}}>
+                    <View style={{ marginBottom: 20 }}>
                       <Text size="lg">Carbs: {field.carb}</Text>
                     </View>
-                    <View style={{marginBottom: 20}}>
+                    <View style={{ marginBottom: 20 }}>
                       <Text size="md">{field.date.toLocaleDateString()} - {field.meal}</Text>
                     </View>
-                    <View style={{marginBottom: 20}}>
+                    <View style={{ marginBottom: 20 }}>
                       <Button
                         style={{ marginTop: 10 }}
                         leftContent={
