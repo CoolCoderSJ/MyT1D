@@ -45,6 +45,7 @@ export default App = () => {
   // Set the state of the app
   const [data, setData] = React.useState({});
   const { isDarkmode, setTheme } = useTheme();
+  const [, forceUpdate] = React.useReducer(x => x + 1, 0);
 
   const styles = StyleSheet.create({
     listItem: {
@@ -236,8 +237,7 @@ export default App = () => {
 
           
             <TouchableOpacity style={{marginTop: 50}} onPress={() =>  {
-                  console.log("logging out")
-                  delkey("login").then(() => {console.log("deleted"); props.navigation.goBack(); props.navigation.goBack(); props.navigation.goBack(); props.navigation.goBack(); props.navigation.goBack(); props.navigation.goBack()})
+                  delkey("login").then(() => {props.navigation.goBack(); forceUpdate()})
                 }}>
               <View style={styles.listItem}>
                 <Text fontWeight="medium">Logout</Text>
