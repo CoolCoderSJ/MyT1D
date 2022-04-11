@@ -29,7 +29,7 @@ export default function App() {
   const [, forceUpdate] = React.useReducer(x => x + 1, 0);
   const navigation = useNavigation();
   const { isDarkmode, setTheme } = useTheme();
-  const [fields, setFields] = React.useState([{}]);
+  const [fields, setFields] = React.useState([]);
 
   // Run once the app has loaded
   React.useEffect(() => {
@@ -41,9 +41,11 @@ export default function App() {
         meals = {};
       }
 
+      let fieldsToSet = []
+
       // Set the ingredients in the state
       for (let i = 0; i < Object.keys(meals).length; i++) {
-        fields.push({
+        fieldsToSet.push({
           meal: meals[String(i)].meal,
           carbs: meals[String(i)].carbs,
           unit: meals[String(i)].unit
@@ -51,8 +53,8 @@ export default function App() {
         filterAllowed.push(i);
       }
 
-      // Remove the empty object that's left over
-      handleRemove(0);
+      setFields(fieldsToSet);
+
     });
   }, []);
 

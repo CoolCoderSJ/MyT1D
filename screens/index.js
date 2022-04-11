@@ -224,7 +224,7 @@ export default App = () => {
 
             <TouchableOpacity style={{ marginTop: 50 }} onPress={() => {
               // Delete the login information, then go back to login
-              delkey("login").then(() => { props.navigation.navigate("Login"); forceUpdate() })
+              delkey("login").then(() => { navigation.navigate("login"); forceUpdate() })
             }}>
               <View style={styles.listItem}>
                 <Text fontWeight="medium">Logout</Text>

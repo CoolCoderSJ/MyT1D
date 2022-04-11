@@ -21,7 +21,8 @@ const get = async (key) => { try { const value = await AsyncStorage.getItem(key)
 let recipeId = NaN;
 let recipes = [];
 let filterAllowed = []
-
+let mealDB = []
+let recipeDB = []
 
 // Update the recipes variable from the database
 get("recipes").then((result) => {
@@ -149,6 +150,9 @@ export default function App() {
     const setDropDownList = () => {
       let meals = [];
       let carbFood = [];
+
+      get("meals").then((result) => { mealDB = result });
+      get("recipes").then((result) => { recipeDB = result });
 
       // Update the drop down list
       get("meals").then(function (result) {
@@ -375,9 +379,38 @@ export default function App() {
                 return (
                   <Section style={{ marginHorizontal: 20, marginTop: 20 }}>
                     <SectionContent>
-                      <View style={{ marginBottom: 20 }}>
+                      <React.Fragment style={{ marginBottom: 20 }}>
                         <AutocompleteDropdown
                           textInputProps={{
+                          onChangeText: e => {
+                            console.log(e)
+                            handleChange(idx, "meal", e);
+                            // Fetch ingredients and recipes to show in the dropdown
+                            let meals = [];
+
+                            if (mealDB) {
+                            for (let i = 0; i < Object.keys(mealDB).length; i++) {
+                              console.log(mealDB[String(i)].meal, e)
+                              if (mealDB[String(i)].meal.includes(e)) {
+                                console.log("here")
+                                meals.push({ id: String(i + 2), title: mealDB[String(i)].meal });
+                              }
+                            }
+                          }
+
+                            let iterId = meals.length;
+                            if (recipeDB) {
+                            for (let i = 0; i < recipeDB.length; i++) {
+                              if (recipeDB[i].name.includes(e)) {
+                                meals.push({ id: String(iterId + 2), title: recipeDB[i].name });
+                                iterId += 1;
+                              }
+                            }
+                            }
+  
+                            setFilterList(meals);
+                            forceUpdate()
+                          },
                             value: field.meal,
                             placeholder: "Ingredient Name",
                             style: {
@@ -405,14 +438,13 @@ export default function App() {
                             color: isDarkmode ? themeColor.white : themeColor.dark,
                           }}
                           renderItem={(item, text) => (
-                            <Text style={{ color: "#fff", padding: 15 }}>{item.title}</Text>
+                            <Text style={{ color: isDarkmode ? themeColor.white : themeColor.dark, padding: 15 }}>{item.title}</Text>
                           )}
                           showClear={true}
                           clearOnFocus={false}
                           closeOnBlur={false}
                           closeOnSubmit={true}
                           dataSet={filterList}
-                          onChangeText={e => handleChange(idx, "meal", e)}
                           onClear={() => handleRemove(idx)}
                           onSelectItem={(item) => {
                             if (item) {
@@ -441,9 +473,9 @@ export default function App() {
                             }
                           }}
                         />
-                      </View>
+                      </React.Fragment>
 
-                      <View style={{ marginBottom: 20 }}>
+                      <View style={{ marginVertical: 20 }}>
                         <TextInput
                           placeholder="Serving Size"
                           onChangeText={e => {

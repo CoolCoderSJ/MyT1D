@@ -5,7 +5,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useNavigation } from '@react-navigation/native';
 import { ma } from 'moving-averages';
 import * as React from "react";
-import { KeyboardAvoidingView, ScrollView, StyleSheet, View } from "react-native";
+import { KeyboardAvoidingView, ScrollView, StyleSheet, View, SafeAreaView } from "react-native";
 import { AutocompleteDropdown } from 'react-native-autocomplete-dropdown';
 import { TouchableOpacity } from "react-native-gesture-handler";
 import {
@@ -15,8 +15,8 @@ import {
   themeColor, TopNav, useTheme
 } from "react-native-rapi-ui";
 import { HStack } from 'react-native-stacks';
-
-
+import { Dimensions } from 'react-native';
+import DatePicker from 'react-native-datepicker'
 
 // Initialize the database functions
 const set = async (key, value) => { try { await AsyncStorage.setItem(key, value) } catch (e) { console.log(e) } }
@@ -43,6 +43,10 @@ let settingsMissing = false;
 let lastSugarValue = "Not recorded";
 let allMeals = [];
 let mealFilter = [];
+let mealDB = [];
+let recipeDB = [];
+
+let date = new Date();
 
 export default function App() {
   const navigation = useNavigation();
@@ -57,7 +61,6 @@ export default function App() {
   const [mealsList, setMealsList] = React.useState([]);
 
   const [servingSizes, setServingSizes] = React.useState({});
-  const [date, setDate] = React.useState(new Date());
   const [show, setShow] = React.useState(false);
 
   const [showInsulinEditor, setShowInsulinEditor] = React.useState(false);
@@ -76,9 +79,12 @@ export default function App() {
 
     // Fetch the ingredients from a database
     get(idtofetch).then((result) => {
+      console.log(idtofetch, result, fields)
+      
       if (result) {
         // Set the state to the ingredients found
         setFields(result);
+        forceUpdate()
 
         // Loop through all of the ingredients
         for (let a = 0; a < result.length; a++) {
@@ -467,6 +473,9 @@ export default function App() {
   React.useEffect(() => {
     const setDropDownListData = () => {
 
+      get("meals").then((result) => { mealDB = result });
+      get("recipes").then((result) => { recipeDB = result });
+
       // Make a list of all of the ingredients ever used in any meal
       // Used later for searching
       getAll().then(function (result) {
@@ -663,26 +672,56 @@ export default function App() {
 
         {showInsulinEditor && !showSearchScreen &&
           <ScrollView>
-            <View style={{ paddingVertical: 10 }}>
-              <Button style={{ marginHorizontal: 20 }} status="primary" text={date.getMonth() + 1 + "/" + date.getDate() + "/" + date.getFullYear()} onPress={showDatePicker} />
-            </View>
 
-            {show && (
-              <DateTimePicker
-                testID="dateTimePicker"
-                value={date}
+              <View style={{ flexDirection: "row", justifyContent: "center", marginVertical: 20, width: "100%" }}>
+              <DatePicker
+                style={{
+                  width: Dimensions.get("window").width * 0.9,
+                }}
+                duration={30}
+                format="MM-DD-YYYY"
+                placeholder='Select Date'
+                date={date}
                 mode="date"
+                confirmBtnText="Confirm"
+                cancelBtnText="Cancel"
+                showIcon={false}
                 is24Hour={false}
                 display="default"
-                onChange={(e, selectedDate) => {
+                customStyles={{
+                  dateInput: {
+                    borderRadius: 8,
+                    width: "100%",
+                    marginVertical: 10
+                  },
+                  dateText: {
+                    color: isDarkmode ? themeColor.white : themeColor.dark,
+                    fontFamily: "Ubuntu_400Regular",
+                    fontSize: 18
+                  },
+                  datePickerCon: {
+                    display: "flex",
+                    flexDirection: "row",
+                    justifyContent: "center",
+                    alignItems: "center",
+                  },
+                  datePicker: {
+                    width: Dimensions.get("window").width,
+                    backgroundColor: isDarkmode ? "#262834" : themeColor.white,
+                    paddingHorizontal: Dimensions.get("window").width * 0.35
+                  }
+
+                }}
+                onDateChange={(selectedDate) => {
                   // Update the date
-                  setDate(selectedDate || date);
+                  console.log(selectedDate)
+                  date = new Date(Number(selectedDate.split("-")[2]), Number(selectedDate.split("-")[0])-1, Number(selectedDate.split("-")[1])) || date
                   setShow(false);
                   fetchMeals();
                   forceUpdate();
                 }}
               />
-            )}
+              </View>
 
             <Button style={{ marginHorizontal: 20 }} text="All Meal Options" status="primary" onPress={() => { setShowInsulinEditor(false) }} />
 
@@ -697,15 +736,47 @@ export default function App() {
                 mainMeal = idx;
               }
 
+
               return (
                 <Section style={{ marginHorizontal: 20, marginTop: 20 }}>
                   <SectionContent>
-                    <View style={{ marginBottom: 20 }}>
+                    <React.Fragment>
                       {showAlert && mainMeal == idx &&
                         <Text style={{ marginBottom: 10 }}>Your sugar level went ~{amount} when previously eating this meal.</Text>
                       }
+
                       <AutocompleteDropdown
+                        suggestionsListMaxHeight={Dimensions.get("window").height * 0.4}
                         textInputProps={{
+                          onChangeText: e => {
+                            console.log(e)
+                            handleChange(idx, "meal", e);
+                            // Fetch ingredients and recipes to show in the dropdown
+                            let meals = [];
+
+                            if (mealDB) {
+                            for (let i = 0; i < Object.keys(mealDB).length; i++) {
+                              console.log(mealDB[String(i)].meal, e)
+                              if (mealDB[String(i)].meal.includes(e)) {
+                                console.log("here")
+                                meals.push({ id: String(i + 2), title: mealDB[String(i)].meal });
+                              }
+                            }
+                          }
+
+                            let iterId = meals.length;
+                            if (recipeDB) {
+                            for (let i = 0; i < recipeDB.length; i++) {
+                              if (recipeDB[i].name.includes(e)) {
+                                meals.push({ id: String(iterId + 2), title: recipeDB[i].name });
+                                iterId += 1;
+                              }
+                            }
+                            }
+  
+                            setFilterList(meals);
+                            forceUpdate()
+                          },
                           value: field.meal,
                           placeholder: "Ingredient Name",
                           style: {
@@ -730,17 +801,16 @@ export default function App() {
                         }}
                         suggestionsListContainerStyle={{
                           backgroundColor: isDarkmode ? "#262834" : themeColor.white,
-                          color: isDarkmode ? themeColor.white : themeColor.dark,
                         }}
+                        containerStyle={{ flexGrow: 1, flexShrink: 1, }}
                         renderItem={(item, text) => (
-                          <Text style={{ color: "#fff", padding: 15 }}>{item.title}</Text>
+                          <Text style={{ color: isDarkmode ? themeColor.white : themeColor.dark, padding: 15, zIndex: 5 }}>{item.title}</Text>
                         )}
                         showClear={true}
                         clearOnFocus={false}
                         closeOnBlur={false}
                         closeOnSubmit={true}
                         dataSet={filterList}
-                        onChangeText={e => { handleChange(idx, "meal", e) }}
                         onClear={() => handleRemove(idx)}
                         onSelectItem={(item) => {
                           if (item) {
@@ -771,9 +841,9 @@ export default function App() {
                         }
                         }
                       />
-                    </View>
+                    </React.Fragment>
 
-                    <View style={{ marginBottom: 20 }}>
+                    <View style={{ marginVertical: 20 }}>
                       <TextInput
                         placeholder="Servings"
                         onChangeText={e => {
@@ -972,7 +1042,7 @@ export default function App() {
                         text="Visit Meal"
                         status="primary"
                         type="TouchableOpacity"
-                        onPress={() => { setDate(field.date); fetchMeals(field.mealid); setShowInsulinEditor(true); setshowSearchScreen(false); }}
+                        onPress={() => { date = field.date; fetchMeals(field.mealid); setShowInsulinEditor(true); setshowSearchScreen(false); }}
                       />
                     </View>
                   </SectionContent>
