@@ -112,20 +112,26 @@ export default function App() {
 
                     let currentval = 0;
 
+                    console.log("NEXT ", nextId)
+
                     get(`${usedMealId}metadata`).then((metadata) => {
+                      console.log("METADATA", metadata)
                       if (metadata) {
                         if (metadata.dexVal) {
                           currentval = metadata.dexVal;
+                          console.log("CURRENT VAL", currentval)
 
                           get(`${nextId}metadata`)
                             .then((result) => {
                               if (result) {
                                 if (result.dexVal) {
                                   sugarValueList.push(currentval - result.dexVal)
+                                  console.log("SUGAR VALUE LIST", sugarValueList)
                                 }
                               }
                             })
                             .then(() => {
+                              console.log("SUGAR VALUE LIST", sugarValueList)
                               // If there were any ingredients found
                               if (sugarValueList && sugarValueList.length > 0) {
                                 // Get a moving average of all of the previous sugar values
@@ -167,6 +173,8 @@ export default function App() {
         mainMeal = undefined;
         mainMealSelected = false;
         totalCarb = 0;
+        foodUnits = 0;
+        totalUnits = correction
         setFields([{}])
       }
     })
@@ -223,7 +231,7 @@ export default function App() {
           totalCarb += Number(values[i].carbs);
         }
       };
-
+      
       // Get the dexcom values
       get("readings").then((result) => {
         readings = result;
@@ -246,6 +254,11 @@ export default function App() {
 
         // Calculate the food units and round to 2 places
         foodUnits = String((totalCarb / specificItoCFactor).toFixed(2));
+
+        if (totalCarb == 0) {
+          foodUnits = "0";
+        }
+        forceUpdate();
 
         // Check if correction is needed
         if (dexVal > threshold) {
@@ -286,7 +299,7 @@ export default function App() {
         // Update the screen rendering
         forceUpdate()
 
-      });
+      })
     });
   }
 
@@ -466,12 +479,15 @@ export default function App() {
     values.splice(i, 1);
     // Update the state and database
     setFields(values);
+    console.log(`meal.${date.getMonth() + 1}.${date.getDate()}.${date.getFullYear()}.${meal}`)
     setObj(`meal.${date.getMonth() + 1}.${date.getDate()}.${date.getFullYear()}.${meal}`, values).then(() => calculateInsulin())
   }
 
   // Update the dropdown data every time the user comes back to this screen from another
   React.useEffect(() => {
     const setDropDownListData = () => {
+
+      date = new Date();
 
       get("meals").then((result) => { mealDB = result });
       get("recipes").then((result) => { recipeDB = result });
@@ -600,7 +616,7 @@ export default function App() {
         {!showInsulinEditor && !showSearchScreen &&
           <ScrollView>
 
-            <TouchableOpacity onPress={() => { meal = ("Breakfast"); fetchMeals(); setShowInsulinEditor(true) }}>
+            <TouchableOpacity onPress={() => { date = new Date(); console.log(date); meal = ("Breakfast"); fetchMeals(); setShowInsulinEditor(true) }}>
               <View style={styles.listItem}>
                 <Text fontWeight="medium">{"Breakfast"}</Text>
                 <Ionicons
@@ -611,7 +627,7 @@ export default function App() {
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => { meal = ("Lunch"); fetchMeals(); setShowInsulinEditor(true) }}>
+            <TouchableOpacity onPress={() => { date = new Date(); meal = ("Lunch"); fetchMeals(); setShowInsulinEditor(true) }}>
               <View style={styles.listItem}>
                 <Text fontWeight="medium">{"Lunch"}</Text>
                 <Ionicons
@@ -622,7 +638,7 @@ export default function App() {
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => { meal = ("PMSnack"); fetchMeals(); setShowInsulinEditor(true) }}>
+            <TouchableOpacity onPress={() => { date = new Date(); meal = ("PMSnack"); fetchMeals(); setShowInsulinEditor(true) }}>
               <View style={styles.listItem}>
                 <Text fontWeight="medium">{"Afternoon Snack"}</Text>
                 <Ionicons
@@ -633,7 +649,7 @@ export default function App() {
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => { meal = ("Dinner"); fetchMeals(); setShowInsulinEditor(true) }}>
+            <TouchableOpacity onPress={() => { date = new Date(); meal = ("Dinner"); fetchMeals(); setShowInsulinEditor(true) }}>
               <View style={styles.listItem}>
                 <Text fontWeight="medium">{"Dinner"}</Text>
                 <Ionicons
@@ -644,7 +660,7 @@ export default function App() {
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => { meal = ("NightSnack"); fetchMeals(); setShowInsulinEditor(true) }}>
+            <TouchableOpacity onPress={() => { date = new Date(); meal = ("NightSnack"); fetchMeals(); setShowInsulinEditor(true) }}>
               <View style={styles.listItem}>
                 <Text fontWeight="medium">{"Night Snack"}</Text>
                 <Ionicons
@@ -655,7 +671,33 @@ export default function App() {
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => { setShowInsulinEditor(false); setshowSearchScreen(true); }}>
+            <TouchableOpacity onPress={() => { setShowInsulinEditor(false); // Make a list of all of the ingredients ever used in any meal
+            // Used later for searching
+            getAll().then(function (result) {
+              allMeals = [];
+              console.log(result);
+
+              // For each database key
+              for (let i = 0; i < result.length; i++) {
+                // If the key refers to a meal
+                if (result[i].includes("meal") && !result[i].includes("metadata") && result != "meals") {
+                  get(result[i]).then(function (data) {
+                    if (data && !result[i].includes("meals") && (result[i].includes("Breakfast") || result[i].includes("Lunch") || result[i].includes("PMSnack") || result[i].includes("Dinner") || result[i].includes("NightSnack"))) {
+                      console.log(result[i], data);
+                      for (let a = 0; a < data.length; a++) {
+                        // Add it to the list
+                        let obj = {
+                          meal: data[a].meal,
+                          carbs: data[a].carbs,
+                          mealid: result[i],
+                        }
+                        allMeals.push(obj);
+                      }
+                    }
+                  });
+                }
+              }
+            }).then(() => {mealFilter = []}).then(() => { setshowSearchScreen(true);}) }}>
               <View style={styles.listItem}>
                 <Text fontWeight="medium">{"Search All Meals"}</Text>
                 <Ionicons
@@ -746,7 +788,7 @@ export default function App() {
                       }
 
                       <AutocompleteDropdown
-                        suggestionsListMaxHeight={Dimensions.get("window").height * 0.4}
+                        suggestionsListMaxHeight={Dimensions.get("window").height * 0.15}
                         textInputProps={{
                           onChangeText: e => {
                             console.log(e)
@@ -778,7 +820,7 @@ export default function App() {
                             forceUpdate()
                           },
                           value: field.meal,
-                          placeholder: "Ingredient Name",
+                          placeholder: "Food Name",
                           style: {
                             color: isDarkmode ? themeColor.white : themeColor.dark,
                             backgroundColor: isDarkmode ? "#262834" : themeColor.white,
@@ -801,6 +843,7 @@ export default function App() {
                         }}
                         suggestionsListContainerStyle={{
                           backgroundColor: isDarkmode ? "#262834" : themeColor.white,
+                          elevation: 10
                         }}
                         containerStyle={{ flexGrow: 1, flexShrink: 1, }}
                         renderItem={(item, text) => (
@@ -823,7 +866,10 @@ export default function App() {
                                 let fieldset = fields
                                 // Update the ingredient set
                                 fieldset[idx]['serving'] = "1"
+
+                                if (mealObj.carbs != Infinity) {
                                 fieldset[idx]['carbs'] = mealObj.carbs
+                                }
                                 fieldset[idx]['unit'] = mealObj.unit
                                 setFields(fieldset)
                                 let servingSize = servingSizes;
@@ -837,9 +883,29 @@ export default function App() {
                             }
                             // Make sure to update the database too
                             handleChange(idx, "meal", item.title);
-                          }
+                            
+                            let meals = [];
+                      
+                            get("meals").then(function (result) {
+                              for (let i = 0; i < Object.keys(result).length; i++) {
+                                meals.push({ id: String(i + 2), title: result[String(i)].meal });
+                              }
+                      
+                              get("recipes").then((result) => {
+                                let iterId = meals.length;
+                                for (let i = 0; i < result.length; i++) {
+                                  meals.push({ id: String(iterId + 2), title: result[i].name });
+                                  iterId += 1;
+                                }
+                      
+                              })
+                      
+                              setFilterList(meals);
+                              console.log(meals, filterList)
+                          })
+                          
                         }
-                        }
+                        }}
                       />
                     </React.Fragment>
 
@@ -920,7 +986,7 @@ export default function App() {
               leftContent={
                 <Ionicons name="add-circle-outline" size={20} color={themeColor.white} />
               }
-              text="Add New Ingredient"
+              text="Add New Food"
               status="primary"
               type="TouchableOpacity"
               onPress={handleAdd}
@@ -1042,7 +1108,7 @@ export default function App() {
                         text="Visit Meal"
                         status="primary"
                         type="TouchableOpacity"
-                        onPress={() => { date = field.date; fetchMeals(field.mealid); setShowInsulinEditor(true); setshowSearchScreen(false); }}
+                        onPress={() => { date = field.date; meal = field.mealid.split(".")[4]; fetchMeals(field.mealid); setShowInsulinEditor(true); setshowSearchScreen(false); }}
                       />
                     </View>
                   </SectionContent>

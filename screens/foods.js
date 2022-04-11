@@ -73,14 +73,26 @@ export default function App() {
         meals = {};
       }
 
+
+      let usedMeals = []
+      if (meals[i]) {
+        if (meals[i].usedMeals) {
+        usedMeals = meals[i].usedMeals
+        }
+      }
+
       meals[i] = {
         meal: fields[i].meal,
         carbs: fields[i].carbs,
         unit: fields[i].unit,
-        usedMeals: meals[i].usedMeals
-      };
+        usedMeals: usedMeals
+      }
 
-      setObj("meals", meals)
+      const values = [...fields];
+      console.log(values[i]['meal'])
+      if (values[i]['meal'] && values[i]['meal'] != "") {
+        setObj("meals", meals) 
+      }
     });
 
 
@@ -92,7 +104,6 @@ export default function App() {
     const values = [...fields];
     values.push({ meal: null, carbs: null, unit: null, usedMeals: [] });
     setFields(values);
-    setObj("meals", values);
     filterAllowed.push(fields.length - 1);
     forceUpdate();
   }

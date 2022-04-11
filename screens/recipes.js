@@ -60,6 +60,7 @@ export default function App() {
         meals: []
       })
     }
+    
 
     // If the recipe was found, set the state
     if (recipes[recipeId]) {
@@ -68,6 +69,19 @@ export default function App() {
 
     // Show the recipe editor
     setShowMealEditor(true)
+
+    let totalcarbs = 0;
+    for (let i = 0; i < recipes[recipeId].meals.length; i++) {
+      if (recipes[recipeId].meals[i].carbs) {
+        totalcarbs += Number(recipes[recipeId].meals[i].carbs);
+      }
+    }
+
+    console.log(recipes, recipeId)
+    // Set the metadata in the database
+    recipes[recipeId]['carbs'] = totalcarbs;
+    forceUpdate()
+
   }
 
   // Create a style object for inputs
@@ -151,6 +165,16 @@ export default function App() {
       let meals = [];
       let carbFood = [];
 
+      // Update the recipes variable from the database
+get("recipes").then((result) => {
+  if (result) {
+    recipes = result;
+    for (let i = 0; i < recipes.length; i++) {
+      filterAllowed.push(i);
+    };
+  }
+})
+
       get("meals").then((result) => { mealDB = result });
       get("recipes").then((result) => { recipeDB = result });
 
@@ -196,13 +220,17 @@ export default function App() {
   // Calculate the carbs
   function calculateCarbs() {
     let totalcarbs = 0;
-    for (let i = 0; i < fields.length; i++) {
-      if (fields[i].carbs) {
-        totalcarbs += Number(fields[i].carbs);
+    for (let i = 0; i < recipes[recipeId].meals.length; i++) {
+      if (recipes[recipeId].meals[i].carbs) {
+        totalcarbs += Number(recipes[recipeId].meals[i].carbs);
       }
     }
+
+    console.log(recipes, recipeId)
     // Set the metadata in the database
     recipes[recipeId]['carbs'] = totalcarbs;
+    forceUpdate()
+    console.log(recipes, recipeId)
     setObj(`recipes`, recipes);
   }
 
@@ -312,7 +340,13 @@ export default function App() {
                 text="Add New Recipe"
                 status="primary"
                 type="TouchableOpacity"
-                onPress={() => { recipeId = recipes.length; fetchMeals(); }}
+                onPress={() => { 
+                  recipeId = recipes.length; 
+                  fetchMeals();
+                  get("recipes").then((result) => {
+                    console.log("RECIPES DB -> ", result)
+                  });
+                 }}
               />
             </View>
           }
@@ -373,9 +407,7 @@ export default function App() {
               </Section>
 
               {fields.map((field, idx) => {
-                let mealTitle = "";
-
-
+                console.log(recipes[recipeId])
                 return (
                   <Section style={{ marginHorizontal: 20, marginTop: 20 }}>
                     <SectionContent>
@@ -390,6 +422,7 @@ export default function App() {
 
                             if (mealDB) {
                             for (let i = 0; i < Object.keys(mealDB).length; i++) {
+                              console.log(mealDB[String(i)])
                               console.log(mealDB[String(i)].meal, e)
                               if (mealDB[String(i)].meal.includes(e)) {
                                 console.log("here")
@@ -470,6 +503,27 @@ export default function App() {
                               }
 
                               handleChange(idx, "meal", item.title);
+
+
+                              let meals = [];
+                      
+                            get("meals").then(function (result) {
+                              for (let i = 0; i < Object.keys(result).length; i++) {
+                                meals.push({ id: String(i + 2), title: result[String(i)].meal });
+                              }
+                      
+                              get("recipes").then((result) => {
+                                let iterId = meals.length;
+                                for (let i = 0; i < result.length; i++) {
+                                  meals.push({ id: String(iterId + 2), title: result[i].name });
+                                  iterId += 1;
+                                }
+                      
+                              })
+                      
+                              setFilterList(meals);
+                              console.log(meals, filterList)
+                          })
                             }
                           }}
                         />

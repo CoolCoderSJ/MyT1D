@@ -5,13 +5,15 @@ import { useNavigation } from '@react-navigation/native';
 import * as React from 'react';
 import {
   Dimensions, ScrollView,
-  View
+  View,
+  StyleSheet
 } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 import {
   Layout, Section, SectionContent, Text,
   themeColor, TopNav, useTheme
 } from "react-native-rapi-ui";
+import { TouchableOpacity } from "react-native-gesture-handler";
 
 
 // Initialize the database operations
@@ -34,6 +36,20 @@ function Home() {
   const [recipeCount, setRecipeCount] = React.useState(0);
   const [first_value, setFirstValue] = React.useState("Loading...");
   const [readingValues, setReadingValues] = React.useState([0, 0]);
+
+  // Define styles for the screen selection options
+  const styles = StyleSheet.create({
+    listItem: {
+      marginHorizontal: 20,
+      marginTop: 20,
+      padding: 20,
+      backgroundColor: isDarkmode ? "#262834" : "white",
+      borderRadius: 10,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+  });
 
   // Run once the app has loaded
   React.useEffect(() => {
@@ -223,31 +239,32 @@ function Home() {
           </SectionContent>
         </Section>
 
-        <Section style={{ marginHorizontal: 20, marginTop: 20 }}>
-          <SectionContent>
-            <View style={{ marginBottom: 20 }}>
-              <Text size="md" ml="-1" textAlign="center">
-                Foods Stored
+        <TouchableOpacity onPress={() => navigation.navigate("Ingredients")}>
+          <View style={styles.listItem}>
+          <Text size="md" ml="-1" textAlign="center">
+                Foods Stored: {foods}
               </Text>
-              <Text fontWeight="400" textAlign="center">
-                {foods}
-              </Text>
-            </View>
-          </SectionContent>
-        </Section>
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={isDarkmode ? themeColor.white : themeColor.black}
+            />
+          </View>
+        </TouchableOpacity>
 
-        <Section style={{ marginHorizontal: 20, marginTop: 20 }}>
-          <SectionContent>
-            <View style={{ marginBottom: 20 }}>
-              <Text size="md" ml="-1" textAlign="center">
-                Recipes Stored
+        <TouchableOpacity onPress={() => navigation.navigate("Recipes")}>
+          <View style={styles.listItem}>
+          <Text size="md" ml="-1" textAlign="center">
+                Recipes Stored: {recipeCount}
               </Text>
-              <Text fontWeight="400" textAlign="center">
-                {recipeCount}
-              </Text>
-            </View>
-          </SectionContent>
-        </Section>
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={isDarkmode ? themeColor.white : themeColor.black}
+            />
+          </View>
+        </TouchableOpacity>
+
       </ScrollView>
     </Layout>
   );
