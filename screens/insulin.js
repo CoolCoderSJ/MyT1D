@@ -105,6 +105,7 @@ export default function App() {
                   let sugarValueList = [];
 
                   // Get the sugar value for the meal after the meal that the ingredient is in
+                  console.log(foods[b])
                   for (let j = 0; j < foods[b]['usedMeals'].length; j++) {
                     let usedMealId = foods[b]['usedMeals'][j];
                     let nextId = `${usedMealId.split(".")[0]}.${usedMealId.split(".")[1]}.${usedMealId.split(".")[2]}.${usedMealId.split(".")[3]}.${mealMap[usedMealId.split(".")[4]]}`;
@@ -136,11 +137,11 @@ export default function App() {
 
                                 // Show the message
                                 if (prediction > 0) {
-                                  amount = `${prediction} higher`
+                                  amount = `${prediction} mg/dl higher`
                                 }
 
                                 else {
-                                  amount = `${0 - 1 * prediction} lower`
+                                  amount = `${0 - 1 * prediction} mg/dl lower`
                                 }
 
                                 // Show the alert
@@ -413,11 +414,11 @@ export default function App() {
 
                             // Show the message
                             if (prediction > 0) {
-                              amount = `${prediction} higher`
+                              amount = `${prediction} mg/dl higher`
                             }
 
                             else {
-                              amount = `${0 - 1 * prediction} lower`
+                              amount = `${0 - 1 * prediction} mg/dl lower`
                             }
 
                             showAlert = true;
@@ -667,7 +668,7 @@ export default function App() {
             <TouchableOpacity onPress={() => { setShowInsulinEditor(false); 
             
             // Update the variables for the search screen
-            
+
             // Make a list of all of the ingredients ever used in any meal
             // Used for searching
             getAll().then(function (result) {
@@ -778,7 +779,7 @@ export default function App() {
                   <SectionContent>
                     <React.Fragment>
                       {showAlert && mainMeal == idx &&
-                        <Text style={{ marginBottom: 10 }}>Your sugar level went ~{amount} when previously eating this meal.</Text>
+                        <Text style={{ marginBottom: 10 }}>On average after this meal, your sugar went ~{amount} than anticipated.</Text>
                       }
 
                       <AutocompleteDropdown
