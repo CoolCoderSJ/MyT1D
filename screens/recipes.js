@@ -60,7 +60,7 @@ export default function App() {
         meals: []
       })
     }
-    
+
 
     // If the recipe was found, set the state
     if (recipes[recipeId]) {
@@ -77,7 +77,6 @@ export default function App() {
       }
     }
 
-    console.log(recipes, recipeId)
     // Set the metadata in the database
     recipes[recipeId]['carbs'] = totalcarbs;
     forceUpdate()
@@ -166,14 +165,14 @@ export default function App() {
       let carbFood = [];
 
       // Update the recipes variable from the database
-get("recipes").then((result) => {
-  if (result) {
-    recipes = result;
-    for (let i = 0; i < recipes.length; i++) {
-      filterAllowed.push(i);
-    };
-  }
-})
+      get("recipes").then((result) => {
+        if (result) {
+          recipes = result;
+          for (let i = 0; i < recipes.length; i++) {
+            filterAllowed.push(i);
+          };
+        }
+      })
 
       get("meals").then((result) => { mealDB = result });
       get("recipes").then((result) => { recipeDB = result });
@@ -198,6 +197,7 @@ get("recipes").then((result) => {
           }
 
           setFilterList(meals);
+
           setMealsList(carbFood);
           // Force update the list
           forceUpdate();
@@ -226,11 +226,9 @@ get("recipes").then((result) => {
       }
     }
 
-    console.log(recipes, recipeId)
     // Set the metadata in the database
     recipes[recipeId]['carbs'] = totalcarbs;
     forceUpdate()
-    console.log(recipes, recipeId)
     setObj(`recipes`, recipes);
   }
 
@@ -340,13 +338,12 @@ get("recipes").then((result) => {
                 text="Add New Recipe"
                 status="primary"
                 type="TouchableOpacity"
-                onPress={() => { 
-                  recipeId = recipes.length; 
+                onPress={() => {
+                  recipeId = recipes.length;
                   fetchMeals();
                   get("recipes").then((result) => {
-                    console.log("RECIPES DB -> ", result)
                   });
-                 }}
+                }}
               />
             </View>
           }
@@ -407,43 +404,38 @@ get("recipes").then((result) => {
               </Section>
 
               {fields.map((field, idx) => {
-                console.log(recipes[recipeId])
                 return (
                   <Section style={{ marginHorizontal: 20, marginTop: 20 }}>
                     <SectionContent>
                       <React.Fragment style={{ marginBottom: 20 }}>
                         <AutocompleteDropdown
                           textInputProps={{
-                          onChangeText: e => {
-                            console.log(e)
-                            handleChange(idx, "meal", e);
-                            // Fetch ingredients and recipes to show in the dropdown
-                            let meals = [];
+                            onChangeText: e => {
+                              handleChange(idx, "meal", e);
+                              // Fetch ingredients and recipes to show in the dropdown
+                              let meals = [];
 
-                            if (mealDB) {
-                            for (let i = 0; i < Object.keys(mealDB).length; i++) {
-                              console.log(mealDB[String(i)])
-                              console.log(mealDB[String(i)].meal, e)
-                              if (mealDB[String(i)].meal.includes(e)) {
-                                console.log("here")
-                                meals.push({ id: String(i + 2), title: mealDB[String(i)].meal });
+                              if (mealDB) {
+                                for (let i = 0; i < Object.keys(mealDB).length; i++) {
+                                  if (mealDB[String(i)].meal.includes(e)) {
+                                    meals.push({ id: String(i + 2), title: mealDB[String(i)].meal });
+                                  }
+                                }
                               }
-                            }
-                          }
 
-                            let iterId = meals.length;
-                            if (recipeDB) {
-                            for (let i = 0; i < recipeDB.length; i++) {
-                              if (recipeDB[i].name.includes(e)) {
-                                meals.push({ id: String(iterId + 2), title: recipeDB[i].name });
-                                iterId += 1;
+                              let iterId = meals.length;
+                              if (recipeDB) {
+                                for (let i = 0; i < recipeDB.length; i++) {
+                                  if (recipeDB[i].name.includes(e)) {
+                                    meals.push({ id: String(iterId + 2), title: recipeDB[i].name });
+                                    iterId += 1;
+                                  }
+                                }
                               }
-                            }
-                            }
-  
-                            setFilterList(meals);
-                            forceUpdate()
-                          },
+
+                              setFilterList(meals);
+                              forceUpdate()
+                            },
                             value: field.meal,
                             placeholder: "Ingredient Name",
                             style: {
@@ -484,10 +476,13 @@ get("recipes").then((result) => {
 
                               let mealObj = undefined;
 
+                              // loop through all of the meals from the database
                               for (let i = 0; i < mealsList.length; i++) {
                                 if (mealsList[i].meal === item.title) {
                                   mealObj = mealsList[i]
                                   let fieldset = fields
+
+                                  // set the meal object to the field in the state
                                   fieldset[idx]['serving'] = "1"
                                   fieldset[idx]['carbs'] = mealObj.carbs
                                   fieldset[idx]['unit'] = mealObj.unit
@@ -506,24 +501,24 @@ get("recipes").then((result) => {
 
 
                               let meals = [];
-                      
-                            get("meals").then(function (result) {
-                              for (let i = 0; i < Object.keys(result).length; i++) {
-                                meals.push({ id: String(i + 2), title: result[String(i)].meal });
-                              }
-                      
-                              get("recipes").then((result) => {
-                                let iterId = meals.length;
-                                for (let i = 0; i < result.length; i++) {
-                                  meals.push({ id: String(iterId + 2), title: result[i].name });
-                                  iterId += 1;
+
+                              // reset the dropdown list to show all of the meals
+                              get("meals").then(function (result) {
+                                for (let i = 0; i < Object.keys(result).length; i++) {
+                                  meals.push({ id: String(i + 2), title: result[String(i)].meal });
                                 }
-                      
+
+                                get("recipes").then((result) => {
+                                  let iterId = meals.length;
+                                  for (let i = 0; i < result.length; i++) {
+                                    meals.push({ id: String(iterId + 2), title: result[i].name });
+                                    iterId += 1;
+                                  }
+
+                                })
+
+                                setFilterList(meals);
                               })
-                      
-                              setFilterList(meals);
-                              console.log(meals, filterList)
-                          })
                             }
                           }}
                         />

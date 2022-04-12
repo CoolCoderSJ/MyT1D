@@ -79,7 +79,6 @@ export default function App() {
 
     // Fetch the ingredients from a database
     get(idtofetch).then((result) => {
-      console.log(idtofetch, result, fields)
       
       if (result) {
         // Set the state to the ingredients found
@@ -112,26 +111,23 @@ export default function App() {
 
                     let currentval = 0;
 
-                    console.log("NEXT ", nextId)
 
+                    // Get the current sugar value for the meal
                     get(`${usedMealId}metadata`).then((metadata) => {
-                      console.log("METADATA", metadata)
                       if (metadata) {
                         if (metadata.dexVal) {
                           currentval = metadata.dexVal;
-                          console.log("CURRENT VAL", currentval)
 
+                          // Get the next meal's sugar value
                           get(`${nextId}metadata`)
                             .then((result) => {
                               if (result) {
                                 if (result.dexVal) {
                                   sugarValueList.push(currentval - result.dexVal)
-                                  console.log("SUGAR VALUE LIST", sugarValueList)
                                 }
                               }
                             })
                             .then(() => {
-                              console.log("SUGAR VALUE LIST", sugarValueList)
                               // If there were any ingredients found
                               if (sugarValueList && sugarValueList.length > 0) {
                                 // Get a moving average of all of the previous sugar values
@@ -147,6 +143,7 @@ export default function App() {
                                   amount = `${0 - 1 * prediction} lower`
                                 }
 
+                                // Show the alert
                                 showAlert = true;
                                 mainMealSelected = true;
                                 mainMeal = a;
@@ -254,11 +251,6 @@ export default function App() {
 
         // Calculate the food units and round to 2 places
         foodUnits = String((totalCarb / specificItoCFactor).toFixed(2));
-
-        if (totalCarb == 0) {
-          foodUnits = "0";
-        }
-        forceUpdate();
 
         // Check if correction is needed
         if (dexVal > threshold) {
@@ -479,7 +471,6 @@ export default function App() {
     values.splice(i, 1);
     // Update the state and database
     setFields(values);
-    console.log(`meal.${date.getMonth() + 1}.${date.getDate()}.${date.getFullYear()}.${meal}`)
     setObj(`meal.${date.getMonth() + 1}.${date.getDate()}.${date.getFullYear()}.${meal}`, values).then(() => calculateInsulin())
   }
 
@@ -487,8 +478,10 @@ export default function App() {
   React.useEffect(() => {
     const setDropDownListData = () => {
 
+      // Set the date to the current date
       date = new Date();
 
+      // Set the ingredients to a variable, later used for search
       get("meals").then((result) => { mealDB = result });
       get("recipes").then((result) => { recipeDB = result });
 
@@ -616,7 +609,7 @@ export default function App() {
         {!showInsulinEditor && !showSearchScreen &&
           <ScrollView>
 
-            <TouchableOpacity onPress={() => { date = new Date(); console.log(date); meal = ("Breakfast"); fetchMeals(); setShowInsulinEditor(true) }}>
+            <TouchableOpacity onPress={() => { date = new Date(); meal = ("Breakfast"); fetchMeals(); setShowInsulinEditor(true) }}>
               <View style={styles.listItem}>
                 <Text fontWeight="medium">{"Breakfast"}</Text>
                 <Ionicons
@@ -671,11 +664,14 @@ export default function App() {
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => { setShowInsulinEditor(false); // Make a list of all of the ingredients ever used in any meal
-            // Used later for searching
+            <TouchableOpacity onPress={() => { setShowInsulinEditor(false); 
+            
+            // Update the variables for the search screen
+            
+            // Make a list of all of the ingredients ever used in any meal
+            // Used for searching
             getAll().then(function (result) {
               allMeals = [];
-              console.log(result);
 
               // For each database key
               for (let i = 0; i < result.length; i++) {
@@ -683,7 +679,6 @@ export default function App() {
                 if (result[i].includes("meal") && !result[i].includes("metadata") && result != "meals") {
                   get(result[i]).then(function (data) {
                     if (data && !result[i].includes("meals") && (result[i].includes("Breakfast") || result[i].includes("Lunch") || result[i].includes("PMSnack") || result[i].includes("Dinner") || result[i].includes("NightSnack"))) {
-                      console.log(result[i], data);
                       for (let a = 0; a < data.length; a++) {
                         // Add it to the list
                         let obj = {
@@ -756,7 +751,6 @@ export default function App() {
                 }}
                 onDateChange={(selectedDate) => {
                   // Update the date
-                  console.log(selectedDate)
                   date = new Date(Number(selectedDate.split("-")[2]), Number(selectedDate.split("-")[0])-1, Number(selectedDate.split("-")[1])) || date
                   setShow(false);
                   fetchMeals();
@@ -791,16 +785,13 @@ export default function App() {
                         suggestionsListMaxHeight={Dimensions.get("window").height * 0.15}
                         textInputProps={{
                           onChangeText: e => {
-                            console.log(e)
                             handleChange(idx, "meal", e);
                             // Fetch ingredients and recipes to show in the dropdown
                             let meals = [];
 
                             if (mealDB) {
                             for (let i = 0; i < Object.keys(mealDB).length; i++) {
-                              console.log(mealDB[String(i)].meal, e)
                               if (mealDB[String(i)].meal.includes(e)) {
-                                console.log("here")
                                 meals.push({ id: String(i + 2), title: mealDB[String(i)].meal });
                               }
                             }
@@ -901,7 +892,6 @@ export default function App() {
                               })
                       
                               setFilterList(meals);
-                              console.log(meals, filterList)
                           })
                           
                         }

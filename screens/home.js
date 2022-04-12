@@ -241,9 +241,9 @@ function Home() {
 
         <TouchableOpacity onPress={() => navigation.navigate("Ingredients")}>
           <View style={styles.listItem}>
-          <Text size="md" ml="-1" textAlign="center">
-                Foods Stored: {foods}
-              </Text>
+            <Text size="md" ml="-1" textAlign="center">
+              Foods Stored: {foods}
+            </Text>
             <Ionicons
               name="chevron-forward"
               size={20}
@@ -254,9 +254,9 @@ function Home() {
 
         <TouchableOpacity onPress={() => navigation.navigate("Recipes")}>
           <View style={styles.listItem}>
-          <Text size="md" ml="-1" textAlign="center">
-                Recipes Stored: {recipeCount}
-              </Text>
+            <Text size="md" ml="-1" textAlign="center">
+              Recipes Stored: {recipeCount}
+            </Text>
             <Ionicons
               name="chevron-forward"
               size={20}

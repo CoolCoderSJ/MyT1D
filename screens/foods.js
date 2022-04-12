@@ -73,11 +73,11 @@ export default function App() {
         meals = {};
       }
 
-
+      // Find the meals in which the ingredient is used
       let usedMeals = []
       if (meals[i]) {
         if (meals[i].usedMeals) {
-        usedMeals = meals[i].usedMeals
+          usedMeals = meals[i].usedMeals
         }
       }
 
@@ -89,9 +89,8 @@ export default function App() {
       }
 
       const values = [...fields];
-      console.log(values[i]['meal'])
       if (values[i]['meal'] && values[i]['meal'] != "") {
-        setObj("meals", meals) 
+        setObj("meals", meals)
       }
     });
 
