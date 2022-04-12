@@ -1,135 +1,51 @@
 // Import the libraries required
-import * as React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import {
-  createDrawerNavigator,
-  DrawerContentScrollView,
-} from '@react-navigation/drawer';
 import { Ionicons } from '@expo/vector-icons';
-import {
-  NativeBaseProvider,
-  Box,
-  Pressable,
-  Heading,
-  VStack,
-  Text,
-  Center,
-  HStack,
-  Divider,
-  Icon,
-  Spinner,
-} from 'native-base';
-import axios from 'axios';
-
-import HomeScreen from '../screens/home';
-import MealsScreen from '../screens/foods';
-import InsulinScreen from '../screens/insulin';
-import RecipesScreen from '../screens/recipes';
-import SettingsScreen from '../screens/settings';
-
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
+import axios from 'axios';
+import * as React from 'react';
+import {
+  ScrollView, StyleSheet, View
+} from "react-native";
+import { TouchableOpacity } from "react-native-gesture-handler";
+import {
+  Layout, Text,
+  themeColor, TopNav, useTheme
+} from "react-native-rapi-ui";
+
+
 
 // Initialize the database functions
-const set = async (key, value) => { try { await AsyncStorage.setItem(key, value) } catch (e) { console.log(e) } }
 const setObj = async (key, value) => { try { const jsonValue = JSON.stringify(value); await AsyncStorage.setItem(key, jsonValue) } catch (e) { console.log(e) } }
 const get = async (key) => { try { const value = await AsyncStorage.getItem(key); if (value !== null) { try { return JSON.parse(value) } catch { return value } } } catch (e) { console.log(e) } }
+const delkey = async (key, value) => { try { await AsyncStorage.removeItem(key) } catch (e) { console.log(e) } }
 
 // Whether the app is loading or not, used to show and hide the loading spinner
 let isLoading = true;
 
-// Create the drawer navigator
-const Drawer = createDrawerNavigator();
 
-// Match the icon to the tab name
-const getIcon = (screenName) => {
-  switch (screenName) {
-    case 'Home':
-      return 'home-outline';
-    case 'Ingredients':
-      return 'nutrition-outline';
-    case 'Insulin':
-      return 'pencil-outline';
-    case 'Dexcom':
-      return 'stats-chart-outline';
-    case 'Recipes':
-      return 'bookmarks-outline';
-    case 'Settings':
-      return 'settings-outline';
-    default:
-      return undefined;
-  }
-};
+export default App = () => {
 
-function CustomDrawerContent(props) {
-  return (
-    <DrawerContentScrollView {...props} safeArea>
-      <VStack space="6" my="2" mx="1">
-        <Box px="4">
-          <Text bold color="gray.700">
-            Diabetic Manager
-          </Text>
-        </Box>
-        <VStack divider={<Divider />} space="4">
-          <VStack space="3">
-            {props.state.routeNames.map((name, index) => (
-              <Pressable
-                px="5"
-                py="3"
-                rounded="md"
-                bg={
-                  index === props.state.index
-                    ? 'rgba(6, 182, 212, 0.1)'
-                    : 'transparent'
-                }
-                onPress={(event) => {
-                  props.navigation.navigate(name);
-                }}>
-                <HStack space="7" alignItems="center">
-                  <Icon
-                    color={
-                      index === props.state.index ? 'primary.500' : 'gray.500'
-                    }
-                    size="5"
-                    as={<Ionicons name={getIcon(name)} />}
-                  />
-                  <Text
-                    fontWeight="500"
-                    color={
-                      index === props.state.index ? 'primary.500' : 'gray.700'
-                    }>
-                    {name}
-                  </Text>
-                </HStack>
-              </Pressable>
-            ))}
-          </VStack>
-        </VStack>
-      </VStack>
-    </DrawerContentScrollView>
-  );
-}
-function MyDrawer() {
-  // Register all of the screens
-  return (
-    <Box safeArea flex={1}>
-      <Drawer.Navigator
-        drawerContent={(props) => <CustomDrawerContent {...props} />}>
-        <Drawer.Screen name="Home" component={HomeScreen} />
-        <Drawer.Screen name="Ingredients" component={MealsScreen} />
-        <Drawer.Screen name="Insulin" component={InsulinScreen} />
-        <Drawer.Screen name="Recipes" component={RecipesScreen} />
-        <Drawer.Screen name="Settings" component={SettingsScreen} />
-      </Drawer.Navigator>
-    </Box>
-
-  );
-}
-
-
-export default function App() {
-
+  const navigation = useNavigation();
   // Set the state of the app
   const [data, setData] = React.useState({});
+  const { isDarkmode, setTheme } = useTheme();
+  const [, forceUpdate] = React.useReducer(x => x + 1, 0);
+
+  // Define styles for the screen selection options
+  const styles = StyleSheet.create({
+    listItem: {
+      marginHorizontal: 20,
+      marginTop: 20,
+      padding: 20,
+      backgroundColor: isDarkmode ? "#262834" : "white",
+      borderRadius: 10,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+  });
+
 
   // Get the login information from the database
   get("login")
@@ -201,7 +117,7 @@ export default function App() {
 
                     setObj("readings", readings)
 
-                    // FInish loading
+                    // Finish loading
                     isLoading = false;
                   })
                   .catch(error => console.error(error.response))
@@ -215,24 +131,114 @@ export default function App() {
 
 
   return (
-    <NavigationContainer independent={true}>
-      <NativeBaseProvider>
+    <Layout>
 
-        {isLoading &&
-          <Center flex={1} px="3">
-            <HStack space={2} alignItems="center">
-              <Spinner size="lg" accessibilityLabel="Loading posts" />
-              <Heading color="primary.500" fontSize="3xl">
-                Loading
-              </Heading>
-            </HStack>
-          </Center>
-        }
+      {isLoading &&
+        <View flex={1} px="3" style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center"
+        }}>
+          <Text color={isDarkmode ? themeColor.white100 : themeColor.dark} size="h2">
+            Loading
+          </Text>
+        </View>
+      }
 
-        {!isLoading &&
-          <MyDrawer />
-        }
-      </NativeBaseProvider>
-    </NavigationContainer>
+      {!isLoading &&
+        <Layout>
+          <TopNav
+            middleContent="MyT1D"
+            rightContent={
+              <Ionicons
+                name={isDarkmode ? "sunny" : "moon"}
+                size={20}
+                color={isDarkmode ? themeColor.white100 : themeColor.dark}
+              />
+            }
+            rightAction={() => {
+              if (isDarkmode) {
+                setTheme("light");
+              } else {
+                setTheme("dark");
+              }
+            }}
+          />
+          <ScrollView>
+
+            <TouchableOpacity onPress={() => navigation.navigate("Home")}>
+              <View style={styles.listItem}>
+                <Text fontWeight="medium">{"Home"}</Text>
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={isDarkmode ? themeColor.white : themeColor.black}
+                />
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => navigation.navigate("Ingredients")}>
+              <View style={styles.listItem}>
+                <Text fontWeight="medium">{"Ingredients"}</Text>
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={isDarkmode ? themeColor.white : themeColor.black}
+                />
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => navigation.navigate("Insulin")}>
+              <View style={styles.listItem}>
+                <Text fontWeight="medium">{"Insulin"}</Text>
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={isDarkmode ? themeColor.white : themeColor.black}
+                />
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => navigation.navigate("Recipes")}>
+              <View style={styles.listItem}>
+                <Text fontWeight="medium">{"Recipes"}</Text>
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={isDarkmode ? themeColor.white : themeColor.black}
+                />
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => navigation.navigate("Settings")}>
+              <View style={styles.listItem}>
+                <Text fontWeight="medium">{"Settings"}</Text>
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={isDarkmode ? themeColor.white : themeColor.black}
+                />
+              </View>
+            </TouchableOpacity>
+
+
+            <TouchableOpacity style={{ marginTop: 50 }} onPress={() => {
+              // Delete the login information, then go back to login
+              delkey("login").then(() => { navigation.navigate("login"); forceUpdate() })
+            }}>
+              <View style={styles.listItem}>
+                <Text fontWeight="medium">Logout</Text>
+                <Ionicons
+                  name="log-out-outline"
+                  size={20}
+                  color={isDarkmode ? themeColor.white : themeColor.black}
+                />
+              </View>
+            </TouchableOpacity>
+
+          </ScrollView>
+        </Layout>
+      }
+    </Layout>
   );
 }

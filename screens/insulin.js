@@ -1,32 +1,30 @@
 // Import the libraries needed
-import * as React from "react"
-import { StyleSheet, TextInput, KeyboardAvoidingView } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
-import {
-  Box,
-  Text,
-  VStack,
-  FormControl,
-  Button,
-  HStack,
-  Center,
-  View,
-  ScrollView,
-  Icon,
-  Switch,
-  Alert,
-  Collapse,
-} from "native-base";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AutocompleteDropdown } from 'react-native-autocomplete-dropdown'
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { ma } from 'moving-averages';
 import { useNavigation } from '@react-navigation/native';
+import { ma } from 'moving-averages';
+import * as React from "react";
+import { KeyboardAvoidingView, ScrollView, StyleSheet, View, SafeAreaView } from "react-native";
+import { AutocompleteDropdown } from 'react-native-autocomplete-dropdown';
+import { TouchableOpacity } from "react-native-gesture-handler";
+import {
+  Button,
+  CheckBox, Layout, Section, SectionContent, Text,
+  TextInput,
+  themeColor, TopNav, useTheme
+} from "react-native-rapi-ui";
+import { HStack } from 'react-native-stacks';
+import { Dimensions } from 'react-native';
+import DatePicker from 'react-native-datepicker'
 
 // Initialize the database functions
 const set = async (key, value) => { try { await AsyncStorage.setItem(key, value) } catch (e) { console.log(e) } }
 const setObj = async (key, value) => { try { const jsonValue = JSON.stringify(value); await AsyncStorage.setItem(key, jsonValue) } catch (e) { console.log(e) } }
 const get = async (key) => { try { const value = await AsyncStorage.getItem(key); if (value !== null) { try { return JSON.parse(value) } catch { return value } } } catch (e) { console.log(e) } }
+const getAll = async () => { try { const keys = await AsyncStorage.getAllKeys(); return keys } catch (error) { console.error(error) } }
+const delkey = async (key, value) => { try { await AsyncStorage.removeItem(key) } catch (e) { console.log(e) } }
+
 
 // Initialize all of the variables
 let foodUnits = "";
@@ -42,12 +40,19 @@ let mainMeal = undefined
 let showAlert = false;
 let amount = "";
 let settingsMissing = false;
+let lastSugarValue = "Not recorded";
+let allMeals = [];
+let mealFilter = [];
+let mealDB = [];
+let recipeDB = [];
 
+let date = new Date();
 
 export default function App() {
   const navigation = useNavigation();
 
   // Initialize the state
+  const { isDarkmode, setTheme } = useTheme();
   const [, forceUpdate] = React.useReducer(x => x + 1, 0);
 
   const [fields, setFields] = React.useState([{}]);
@@ -56,18 +61,29 @@ export default function App() {
   const [mealsList, setMealsList] = React.useState([]);
 
   const [servingSizes, setServingSizes] = React.useState({});
-  const [date, setDate] = React.useState(new Date());
   const [show, setShow] = React.useState(false);
 
   const [showInsulinEditor, setShowInsulinEditor] = React.useState(false);
+  const [showSearchScreen, setshowSearchScreen] = React.useState(false);
 
 
-  const fetchMeals = () => {
+  const fetchMeals = (mealid = undefined) => {
+    let idtofetch = null;
+    // If a meal id to fetch is not specified, generate an id using the current set date and the current set meal
+    if (mealid) {
+      idtofetch = mealid
+    }
+    else {
+      idtofetch = `meal.${date.getMonth() + 1}.${date.getDate()}.${date.getFullYear()}.${meal}`
+    }
+
     // Fetch the ingredients from a database
-    get(`meal${date.getMonth() + 1}${date.getDate()}${date.getFullYear()}${meal}`).then((result) => {
+    get(idtofetch).then((result) => {
+      
       if (result) {
         // Set the state to the ingredients found
         setFields(result);
+        forceUpdate()
 
         // Loop through all of the ingredients
         for (let a = 0; a < result.length; a++) {
@@ -91,39 +107,51 @@ export default function App() {
                   // Get the sugar value for the meal after the meal that the ingredient is in
                   for (let j = 0; j < foods[b]['usedMeals'].length; j++) {
                     let usedMealId = foods[b]['usedMeals'][j];
-                    let usedMealName = usedMealId.split("meal")[1].replace(/[0-9]/g, '');
-                    let restOfTheId = usedMealId.split(usedMealName)[0];
+                    let nextId = `${usedMealId.split(".")[0]}.${usedMealId.split(".")[1]}.${usedMealId.split(".")[2]}.${usedMealId.split(".")[3]}.${mealMap[usedMealId.split(".")[4]]}`;
 
-                    let nextId = `${restOfTheId}${mealMap[usedMealName]}`;
+                    let currentval = 0;
 
-                    get(`${nextId}metadata`)
-                      .then((result) => {
-                        if (result) {
-                          if (result.dexVal) {
-                            sugarValueList.push(result.dexVal)
-                          }
+
+                    // Get the current sugar value for the meal
+                    get(`${usedMealId}metadata`).then((metadata) => {
+                      if (metadata) {
+                        if (metadata.dexVal) {
+                          currentval = metadata.dexVal;
+
+                          // Get the next meal's sugar value
+                          get(`${nextId}metadata`)
+                            .then((result) => {
+                              if (result) {
+                                if (result.dexVal) {
+                                  sugarValueList.push(currentval - result.dexVal)
+                                }
+                              }
+                            })
+                            .then(() => {
+                              // If there were any ingredients found
+                              if (sugarValueList && sugarValueList.length > 0) {
+                                // Get a moving average of all of the previous sugar values
+                                let averages = ma(sugarValueList, sugarValueList.length);
+                                let prediction = averages[sugarValueList.length - 1];
+
+                                // Show the message
+                                if (prediction > 0) {
+                                  amount = `${prediction} higher`
+                                }
+
+                                else {
+                                  amount = `${0 - 1 * prediction} lower`
+                                }
+
+                                // Show the alert
+                                showAlert = true;
+                                mainMealSelected = true;
+                                mainMeal = a;
+                              }
+                            })
                         }
-                      })
-                      .then(() => {
-                        // If there were any ingredients found
-                        if (sugarValueList && sugarValueList.length > 0) {
-                          // Get a moving average of all of the previous sugar values
-                          let averages = ma(sugarValueList, sugarValueList.length);
-                          let prediction = averages[sugarValueList.length - 1];
-
-                          // Show the message
-                          if (prediction > 100) {
-                            amount = `${prediction - 100} higher`
-                          }
-
-                          else {
-                            amount = `${100 - prediction} lower`
-                          }
-
-                          showAlert = true;
-                          mainMealSelected = true;
-                        }
-                      })
+                      }
+                    })
                   }
                 }
               }
@@ -134,6 +162,7 @@ export default function App() {
 
         // Run the insulin calculator
         calculateInsulin();
+        forceUpdate();
       }
       else {
         // Clear the state
@@ -141,6 +170,8 @@ export default function App() {
         mainMeal = undefined;
         mainMealSelected = false;
         totalCarb = 0;
+        foodUnits = 0;
+        totalUnits = correction
         setFields([{}])
       }
     })
@@ -152,12 +183,12 @@ export default function App() {
       }
     });
 
-
+    forceUpdate()
   }
 
   const calculateInsulin = () => {
     // Get the ingredients
-    get(`meal${date.getMonth() + 1}${date.getDate()}${date.getFullYear()}${meal}`).then((values) => {
+    get(`meal.${date.getMonth() + 1}.${date.getDate()}.${date.getFullYear()}.${meal}`).then((values) => {
 
       let specificItoCFactor = null;
       let specificISFFactor = null;
@@ -197,7 +228,7 @@ export default function App() {
           totalCarb += Number(values[i].carbs);
         }
       };
-
+      
       // Get the dexcom values
       get("readings").then((result) => {
         readings = result;
@@ -248,17 +279,46 @@ export default function App() {
 
       }).then(() => {
 
-        // Set the metadata to the database 
-        setObj(`meal${date.getMonth() + 1}${date.getDate()}${date.getFullYear()}${meal}metadata`, {
-          dexVal: sugarValue,
-          totalCarb: totalCarb,
-        })
+        get(`meal.${date.getMonth() + 1}.${date.getDate()}.${date.getFullYear()}.${meal}metadata`).then((metadata) => {
+          if (metadata) {
+            if (metadata.dexVal) {
+              lastSugarValue = metadata.dexVal;
+              forceUpdate()
+            }
+          }
+        });
 
         // Update the screen rendering
         forceUpdate()
 
-      });
+      })
     });
+  }
+
+  // When the method to specifically save the metadata is called
+  const updateInsulinDB = () => {
+    // Get the current dexcom value
+    get("readings").then((result) => {
+      readings = result;
+      let dexVal = readings[0].value;
+      // Calculate carbs
+      totalCarb = 0;
+      for (let i = 0; i < fields.length; i++) {
+        if (fields[i].carbs) {
+          totalCarb += Number(fields[i].carbs);
+        }
+      };
+
+      lastSugarValue = dexVal;
+      forceUpdate();
+
+      // Set the metadata to the database 
+      setObj(`meal.${date.getMonth() + 1}.${date.getDate()}.${date.getFullYear()}.${meal}metadata`, {
+        dexVal: dexVal,
+        totalCarb: totalCarb,
+      })
+
+    })
   }
 
   // What happens when an ingredient is changed
@@ -272,21 +332,23 @@ export default function App() {
     // Get the ingredients from the state
     const values = [...fields];
 
-    // Remove noise from data
-    if (type === "meal") {
-      value = value.title;
-    }
-
     // Update the value
     values[i][type] = value;
 
+    // Update the state
+    setFields(values);
+
+    let id = `meal.${date.getMonth() + 1}.${date.getDate()}.${date.getFullYear()}.${meal}`
+
+    // Update the meals database then calculate the insulin
+    setObj(id, values).then(() => calculateInsulin());
 
     // Get all ingredients 
     get("meals").then(function (result) {
 
       let foods = result;
 
-      let id = `meal${date.getMonth() + 1}${date.getDate()}${date.getFullYear()}${meal}`
+      let id = `meal.${date.getMonth() + 1}.${date.getDate()}.${date.getFullYear()}.${meal}`
 
       // Loop through all ingredients in the state
       for (let a = 0; a < foods.length; a++) {
@@ -317,63 +379,77 @@ export default function App() {
                 "NightSnack": "Breakfast",
               }
 
+              // Make a list where all sugar values for the meals will be stored
               let sugarValueList = [];
 
+              // Loop through all meals in the used meals list attached to the food
               for (let j = 0; j < foods[a]['usedMeals'].length; j++) {
                 let usedMealId = foods[a]['usedMeals'][j];
-                let usedMealName = usedMealId.split("meal")[1].replace(/[0-9]/g, '');
-                let restOfTheId = usedMealId.split(usedMealName)[0];
 
-                let nextId = `${restOfTheId}${mealMap[usedMealName]}`;
+                // Get the sugar value for the meal
+                let nextId = `${usedMealId.split(".")[0]}.${usedMealId.split(".")[1]}.${usedMealId.split(".")[2]}.${usedMealId.split(".")[3]}.${mealMap[usedMealId.split(".")[4]]}`;
 
-                get(`${nextId}metadata`)
-                  .then((result) => {
-                    if (result) {
-                      if (result.dexVal) {
-                        sugarValueList.push(result.dexVal)
-                      }
+                let currentval = 0;
+
+                get(`${usedMealId}metadata`).then((metadata) => {
+                  if (metadata) {
+                    if (metadata.dexVal) {
+                      currentval = metadata.dexVal;
+
+                      get(`${nextId}metadata`)
+                        .then((result) => {
+                          if (result) {
+                            if (result.dexVal) {
+                              sugarValueList.push(currentval - result.dexVal)
+                            }
+                          }
+                        })
+                        .then(() => {
+                          // If there were any ingredients found
+                          if (sugarValueList && sugarValueList.length > 0) {
+                            // Get a moving average of all of the previous sugar values
+                            let averages = ma(sugarValueList, sugarValueList.length);
+                            let prediction = averages[sugarValueList.length - 1];
+
+                            // Show the message
+                            if (prediction > 0) {
+                              amount = `${prediction} higher`
+                            }
+
+                            else {
+                              amount = `${0 - 1 * prediction} lower`
+                            }
+
+                            showAlert = true;
+                          }
+
+
+                        })
+
                     }
-                  })
-                  .then(() => {
-                    if (sugarValueList && sugarValueList.length > 0) {
-                      // Get a list of moving averages from the list of sugar values
-                      let averages = ma(sugarValueList, sugarValueList.length);
-                      // Get a single moving average
-                      let prediction = averages[sugarValueList.length - 1];
 
-                      // Show the message to the user
-                      if (prediction > 100) {
-                        amount = `${prediction - 100} higher`
-                      }
-
-                      else {
-                        amount = `${100 - prediction} lower`
-                      }
-
-                      showAlert = true;
-                    }
-
-
-                  })
+                  }
+                });
 
               }
-
             }
-          }
 
+          }
         }
       }
 
       // Update the foods database
       setObj("meals", foods);
+
       // Update the state
       setFields(values);
 
       // Update the meals database then calculate the insulin
       setObj(id, values).then(() => calculateInsulin());
 
-    });
+    })
 
+    forceUpdate();
 
   }
 
@@ -385,7 +461,7 @@ export default function App() {
 
     // Update the state and database
     setFields(values);
-    setObj(`meal${date.getMonth() + 1}${date.getDate()}${date.getFullYear()}${meal}`, values);
+    setObj(`meal.${date.getMonth() + 1}.${date.getDate()}.${date.getFullYear()}.${meal}`, values);
   }
 
   // What happens when a delete button is clicked
@@ -395,12 +471,47 @@ export default function App() {
     values.splice(i, 1);
     // Update the state and database
     setFields(values);
-    setObj(`meal${date.getMonth() + 1}${date.getDate()}${date.getFullYear()}${meal}`, values).then(() => calculateInsulin())
+    setObj(`meal.${date.getMonth() + 1}.${date.getDate()}.${date.getFullYear()}.${meal}`, values).then(() => calculateInsulin())
   }
 
   // Update the dropdown data every time the user comes back to this screen from another
   React.useEffect(() => {
     const setDropDownListData = () => {
+
+      // Set the date to the current date
+      date = new Date();
+
+      // Set the ingredients to a variable, later used for search
+      get("meals").then((result) => { mealDB = result });
+      get("recipes").then((result) => { recipeDB = result });
+
+      // Make a list of all of the ingredients ever used in any meal
+      // Used later for searching
+      getAll().then(function (result) {
+        allMeals = [];
+
+        // For each database key
+        for (let i = 0; i < result.length; i++) {
+          // If the key refers to a meal
+          if (result[i].includes("meal") && !result[i].includes("metadata") && result != "meals") {
+            get(result[i]).then(function (data) {
+              if (data && !result[i].includes("meals") && (result[i].includes("Breakfast") || result[i].includes("Lunch") || result[i].includes("PMSnack") || result[i].includes("Dinner") || result[i].includes("NightSnack"))) {
+                for (let a = 0; a < data.length; a++) {
+                  // Add it to the list
+                  let obj = {
+                    meal: data[a].meal,
+                    carbs: data[a].carbs,
+                    mealid: result[i],
+                  }
+                  allMeals.push(obj);
+                }
+              }
+            });
+          }
+        }
+      });
+
+      // Fetch ingredients and recipes to show in the dropdown
       let meals = [];
       let carbFood = [];
 
@@ -447,277 +558,558 @@ export default function App() {
     setShow(true);
   }
 
+  // Create a style object for the main menu selections
+  const styles = StyleSheet.create({
+    listItem: {
+      marginHorizontal: 20,
+      marginTop: 20,
+      padding: 20,
+      backgroundColor: isDarkmode ? "#262834" : "white",
+      borderRadius: 10,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+  });
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={{ flex: 1 }}
     >
-    <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-      <View style={{ padding: 40 }}>
-        <Center>
-          <Box safeArea p="2" py="2" w="90%" maxW="290" h="90%">
 
-            {!showInsulinEditor &&
-              <View>
-                <View style={{ paddingBottom: 10 }}>
-                  <Button size="lg" colorScheme="indigo" onPress={() => { meal = ("Breakfast"); fetchMeals(); setShowInsulinEditor(true) }}>
-                    Breakfast
-                  </Button>
-                </View>
-
-                <View style={{ paddingBottom: 10 }}>
-                  <Button size="lg" colorScheme="indigo" onPress={() => { meal = ("Lunch"); fetchMeals(); setShowInsulinEditor(true) }}>
-                    Lunch
-                  </Button>
-                </View>
-
-                <View style={{ paddingBottom: 10 }}>
-                  <Button size="lg" colorScheme="indigo" onPress={() => { meal = ("PMSnack"); fetchMeals(); setShowInsulinEditor(true) }}>
-                    Afternoon Snack
-                  </Button>
-                </View>
-
-                <View style={{ paddingBottom: 10 }}>
-                  <Button size="lg" colorScheme="indigo" onPress={() => { meal = ("Dinner"); fetchMeals(); setShowInsulinEditor(true) }}>
-                    Dinner
-                  </Button>
-                </View>
-
-                <View style={{ paddingBottom: 10 }}>
-                  <Button size="lg" colorScheme="indigo" onPress={() => { meal = ("NightSnack"); fetchMeals(); setShowInsulinEditor(true) }}>
-                    Night Snack
-                  </Button>
-                </View>
-
-              </View>
+      <Layout>
+        <TopNav
+          leftContent={
+            <Ionicons
+              name="chevron-back"
+              size={20}
+              color={isDarkmode ? themeColor.white : themeColor.black}
+            />
+          }
+          leftAction={() => navigation.goBack()}
+          middleContent="Insulin"
+          rightContent={
+            <Ionicons
+              name={isDarkmode ? "sunny" : "moon"}
+              size={20}
+              color={isDarkmode ? themeColor.white100 : themeColor.dark}
+            />
+          }
+          rightAction={() => {
+            if (isDarkmode) {
+              setTheme("light");
+            } else {
+              setTheme("dark");
             }
+          }}
+        />
 
-            {showInsulinEditor &&
-              <View>
-                <View style={{ paddingBottom: 10 }}>
-                  <Button size="lg" colorScheme="indigo" onPress={showDatePicker}>
-                    {date.getMonth() + 1 + "/" + date.getDate() + "/" + date.getFullYear()}
-                  </Button>
-                </View>
 
-                {show && (
-                  <DateTimePicker
-                    testID="dateTimePicker"
-                    value={date}
-                    mode="date"
-                    is24Hour={false}
-                    display="default"
-                    onChange={(e, selectedDate) => {
-                      // Update the date
-                      setDate(selectedDate || date);
-                      setShow(false);
-                      fetchMeals();
-                    }}
-                  />
-                )}
+        {!showInsulinEditor && !showSearchScreen &&
+          <ScrollView>
 
-                <VStack space={10} mt="5">
-                  <View style={{ paddingBottom: 20 }}>
-                    <Button size="lg" colorScheme="indigo" onPress={() => { setShowInsulinEditor(false) }}>
-                      All Meal Options
-                    </Button>
-                  </View>
+            <TouchableOpacity onPress={() => { date = new Date(); meal = ("Breakfast"); fetchMeals(); setShowInsulinEditor(true) }}>
+              <View style={styles.listItem}>
+                <Text fontWeight="medium">{"Breakfast"}</Text>
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={isDarkmode ? themeColor.white : themeColor.black}
+                />
+              </View>
+            </TouchableOpacity>
 
-                  {fields.map((field, idx) => {
+            <TouchableOpacity onPress={() => { date = new Date(); meal = ("Lunch"); fetchMeals(); setShowInsulinEditor(true) }}>
+              <View style={styles.listItem}>
+                <Text fontWeight="medium">{"Lunch"}</Text>
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={isDarkmode ? themeColor.white : themeColor.black}
+                />
+              </View>
+            </TouchableOpacity>
 
-                    const styles = StyleSheet.create({
-                      input: {
-                        height: 40,
-                        borderWidth: 1,
-                        padding: 10,
-                        borderRadius: 5,
-                        marginBottom: 5,
-                      },
-                    });
+            <TouchableOpacity onPress={() => { date = new Date(); meal = ("PMSnack"); fetchMeals(); setShowInsulinEditor(true) }}>
+              <View style={styles.listItem}>
+                <Text fontWeight="medium">{"Afternoon Snack"}</Text>
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={isDarkmode ? themeColor.white : themeColor.black}
+                />
+              </View>
+            </TouchableOpacity>
 
-                    // Get meal title 
-                    let mealTitle = "";
+            <TouchableOpacity onPress={() => { date = new Date(); meal = ("Dinner"); fetchMeals(); setShowInsulinEditor(true) }}>
+              <View style={styles.listItem}>
+                <Text fontWeight="medium">{"Dinner"}</Text>
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={isDarkmode ? themeColor.white : themeColor.black}
+                />
+              </View>
+            </TouchableOpacity>
 
-                    if (field) {
-                      if (field.meal) {
-                        mealTitle = field.meal;
+            <TouchableOpacity onPress={() => { date = new Date(); meal = ("NightSnack"); fetchMeals(); setShowInsulinEditor(true) }}>
+              <View style={styles.listItem}>
+                <Text fontWeight="medium">{"Night Snack"}</Text>
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={isDarkmode ? themeColor.white : themeColor.black}
+                />
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => { setShowInsulinEditor(false); 
+            
+            // Update the variables for the search screen
+            
+            // Make a list of all of the ingredients ever used in any meal
+            // Used for searching
+            getAll().then(function (result) {
+              allMeals = [];
+
+              // For each database key
+              for (let i = 0; i < result.length; i++) {
+                // If the key refers to a meal
+                if (result[i].includes("meal") && !result[i].includes("metadata") && result != "meals") {
+                  get(result[i]).then(function (data) {
+                    if (data && !result[i].includes("meals") && (result[i].includes("Breakfast") || result[i].includes("Lunch") || result[i].includes("PMSnack") || result[i].includes("Dinner") || result[i].includes("NightSnack"))) {
+                      for (let a = 0; a < data.length; a++) {
+                        // Add it to the list
+                        let obj = {
+                          meal: data[a].meal,
+                          carbs: data[a].carbs,
+                          mealid: result[i],
+                        }
+                        allMeals.push(obj);
                       }
                     }
-
-                    return (
-                      <HStack space="7">
-                        <View alignItems={'flex-start'}>
-                          <FormControl key={`${field}-${idx}`}>
-
-                            <Collapse isOpen={showAlert}>
-                              <Alert w="100%" status={"info"}>
-                                <VStack space={2} flexShrink={1} w="100%">
-                                  <HStack flexShrink={1} space={2} justifyContent="space-between">
-                                    <HStack space={2} flexShrink={1}>
-                                      <Alert.Icon mt="1" />
-                                      <Text fontSize="md" color="coolGray.800">
-                                        Your sugar level went ~{amount} when previously eating this meal.
-                                      </Text>
-                                    </HStack>
-                                  </HStack>
-                                </VStack>
-                              </Alert>
-                            </Collapse>
-
-
-                            <FormControl.Label>Meal</FormControl.Label>
-
-                            <AutocompleteDropdown
-                              textInputProps={{
-                                "value": mealTitle,
-                              }}
-                              showClear={true}
-                              clearOnFocus={false}
-                              closeOnBlur={false}
-                              closeOnSubmit={true}
-                              dataSet={filterList}
-                              onChangeText={e => handleChange(idx, "meal", e)}
-                              onClear={() => handleRemove(idx)}
-                              onSelectItem={(item) => {
-                                if (item) {
-
-                                  let mealObj = undefined;
-                                  // If the ingredient is in the database
-                                  for (let i = 0; i < mealsList.length; i++) {
-                                    if (mealsList[i].meal === item.title) {
-                                      // Get the ingredient from the database
-                                      mealObj = mealsList[i]
-                                      let fieldset = fields
-                                      // Update the ingredient set
-                                      fieldset[idx]['serving'] = "1"
-                                      fieldset[idx]['carbs'] = mealObj.carbs
-                                      fieldset[idx]['unit'] = mealObj.unit
-                                      setFields(fieldset)
-                                      let servingSize = servingSizes;
-                                      servingSize[idx] = mealObj.carbs;
-                                      setServingSizes(servingSize)
-                                    }
-                                  }
-
-                                  if (!mealObj) {
-                                    return
-                                  }
-                                  // Make sure to update the database too
-                                  handleChange(idx, "meal", item);
-                                }
-                              }
-                              }
-                            />
-
-                            <FormControl.Label>Serving Amount (1, 0.75, 0.5, etc.)</FormControl.Label>
-                            <TextInput
-                              style={styles.input}
-                              onChangeText={e => {
-                                if (servingSizes[idx]) {
-                                  let fieldset = fields
-                                  fieldset[idx]['carbs'] = String(Number(e) * servingSizes[idx])
-                                  setFields(fieldset)
-                                }
-                                handleChange(idx, "serving", e)
-                              }}
-                              value={field.serving}
-                              keyboardType="numeric"
-                            />
-
-                            <FormControl.Label>Carbs</FormControl.Label>
-                            <TextInput
-                              style={styles.input}
-                              onChangeText={e => handleChange(idx, "carbs", e)}
-                              value={field.carbs}
-                              keyboardType="numeric"
-                            />
-
-                            <FormControl.Label>Unit (e.g. cup, oz, etc.)</FormControl.Label>
-                            <TextInput
-                              style={styles.input}
-                              onChangeText={e => handleChange(idx, "unit", e)}
-                              value={field.unit}
-                            />
-                          </FormControl>
-
-
-                          <HStack alignItems="center" space={8}>
-                            <Text fontSize="lg">Main Meal</Text>
-                            <Switch
-                              isDisabled={mainMealSelected && mainMeal != idx}
-                              isChecked={mainMeal == idx || field['mainMeal']}
-                              onToggle={(value) => {
-                                // Update the check to reflect the toggle's current state
-                                mainMealSelected = value
-                                if (value) {
-                                  mainMeal = idx
-                                }
-                                else {
-                                  mainMeal = undefined
-                                }
-                                handleChange(idx, "mainMeal", value)
-
-                              }}
-                            />
-                          </HStack>
-                        </View>
-                      </HStack>
-                    );
-                  })}
-
-                  <Button leftIcon={<Icon
-                    color='white'
-                    size="8"
-                    as={<Ionicons name="add-outline" />}
-                  />}
-
-                    onPress={handleAdd}
-                  >Add Ingredient</Button>
-
-
-                  <View style={{ paddingTop: 20, paddingBottom: 20 }}>
-                    <Collapse isOpen={settingsMissing}>
-                      <Alert w="100%" status={"info"}>
-                        <VStack space={2} flexShrink={1} w="100%">
-                          <HStack flexShrink={1} space={2} justifyContent="space-between">
-                            <HStack space={2} flexShrink={1}>
-                              <Alert.Icon mt="1" />
-                              <Text fontSize="md" color="coolGray.800">
-                                Please make sure your values are updated under the settings tab.
-                              </Text>
-                            </HStack>
-                          </HStack>
-                        </VStack>
-                      </Alert>
-                    </Collapse>
-
-                    <Text fontSize="lg" style={{ textAlign: 'center' }}>
-                      Glucose Value: {sugarValue}
-                    </Text>
-
-                    <Text fontSize="lg" style={{ textAlign: 'center' }}>
-                      Total Carbs: {totalCarb}
-                    </Text>
-
-                    <Text fontSize="lg" style={{ textAlign: 'center' }} color={foodUnits == "Not Available" ? "#ff0000" : "#000000"}>
-                      Food Units: {foodUnits}
-                    </Text>
-                    <Text fontSize="lg" style={{ textAlign: 'center' }} color={correction == "Not Available" ? "#ff0000" : "#000000"}>
-                      Correction Units: {correction}
-                    </Text>
-                    <Text fontSize="lg" style={{ textAlign: 'center' }} color={totalUnits == "Not Available" ? "#ff0000" : "#000000"}>
-                      Total Units: {totalUnits}
-                    </Text>
-
-                  </View>
-                </VStack>
-
+                  });
+                }
+              }
+            }).then(() => {mealFilter = []}).then(() => { setshowSearchScreen(true);}) }}>
+              <View style={styles.listItem}>
+                <Text fontWeight="medium">{"Search All Meals"}</Text>
+                <Ionicons
+                  name="search-circle"
+                  size={20}
+                  color={isDarkmode ? themeColor.white : themeColor.black}
+                />
               </View>
+            </TouchableOpacity>
+
+
+          </ScrollView>
+        }
+
+        {showInsulinEditor && !showSearchScreen &&
+          <ScrollView>
+
+              <View style={{ flexDirection: "row", justifyContent: "center", marginVertical: 20, width: "100%" }}>
+              <DatePicker
+                style={{
+                  width: Dimensions.get("window").width * 0.9,
+                }}
+                duration={30}
+                format="MM-DD-YYYY"
+                placeholder='Select Date'
+                date={date}
+                mode="date"
+                confirmBtnText="Confirm"
+                cancelBtnText="Cancel"
+                showIcon={false}
+                is24Hour={false}
+                display="default"
+                customStyles={{
+                  dateInput: {
+                    borderRadius: 8,
+                    width: "100%",
+                    marginVertical: 10
+                  },
+                  dateText: {
+                    color: isDarkmode ? themeColor.white : themeColor.dark,
+                    fontFamily: "Ubuntu_400Regular",
+                    fontSize: 18
+                  },
+                  datePickerCon: {
+                    display: "flex",
+                    flexDirection: "row",
+                    justifyContent: "center",
+                    alignItems: "center",
+                  },
+                  datePicker: {
+                    width: Dimensions.get("window").width,
+                    backgroundColor: isDarkmode ? "#262834" : themeColor.white,
+                    paddingHorizontal: Dimensions.get("window").width * 0.35
+                  }
+
+                }}
+                onDateChange={(selectedDate) => {
+                  // Update the date
+                  date = new Date(Number(selectedDate.split("-")[2]), Number(selectedDate.split("-")[0])-1, Number(selectedDate.split("-")[1])) || date
+                  setShow(false);
+                  fetchMeals();
+                  forceUpdate();
+                }}
+              />
+              </View>
+
+            <Button style={{ marginHorizontal: 20 }} text="All Meal Options" status="primary" onPress={() => { setShowInsulinEditor(false) }} />
+
+            <Text size="h3" style={{ marginHorizontal: 20, textAlign: "center", marginVertical: 20 }}>{meal}</Text>
+
+            {fields.map((field, idx) => {
+
+
+
+              if (field['mainMeal'] == true) {
+                mainMealSelected = true;
+                mainMeal = idx;
+              }
+
+
+              return (
+                <Section style={{ marginHorizontal: 20, marginTop: 20 }}>
+                  <SectionContent>
+                    <React.Fragment>
+                      {showAlert && mainMeal == idx &&
+                        <Text style={{ marginBottom: 10 }}>Your sugar level went ~{amount} when previously eating this meal.</Text>
+                      }
+
+                      <AutocompleteDropdown
+                        suggestionsListMaxHeight={Dimensions.get("window").height * 0.15}
+                        textInputProps={{
+                          onChangeText: e => {
+                            handleChange(idx, "meal", e);
+                            // Fetch ingredients and recipes to show in the dropdown
+                            let meals = [];
+
+                            if (mealDB) {
+                            for (let i = 0; i < Object.keys(mealDB).length; i++) {
+                              if (mealDB[String(i)].meal.includes(e)) {
+                                meals.push({ id: String(i + 2), title: mealDB[String(i)].meal });
+                              }
+                            }
+                          }
+
+                            let iterId = meals.length;
+                            if (recipeDB) {
+                            for (let i = 0; i < recipeDB.length; i++) {
+                              if (recipeDB[i].name.includes(e)) {
+                                meals.push({ id: String(iterId + 2), title: recipeDB[i].name });
+                                iterId += 1;
+                              }
+                            }
+                            }
+  
+                            setFilterList(meals);
+                            forceUpdate()
+                          },
+                          value: field.meal,
+                          placeholder: "Food Name",
+                          style: {
+                            color: isDarkmode ? themeColor.white : themeColor.dark,
+                            backgroundColor: isDarkmode ? "#262834" : themeColor.white,
+                            borderColor: isDarkmode ? "#60647e" : "#d8d8d8",
+                            borderWidth: 1,
+                            borderRadius: 8,
+                            flexDirection: "row",
+                            paddingHorizontal: 20,
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            fontFamily: "Ubuntu_400Regular",
+                          }
+                        }}
+
+                        rightButtonsContainerStyle={{
+                          backgroundColor: isDarkmode ? "#262834" : themeColor.white,
+                          borderColor: isDarkmode ? "#60647e" : "#d8d8d8",
+                          borderWidth: 1,
+                          borderRadius: 8,
+                        }}
+                        suggestionsListContainerStyle={{
+                          backgroundColor: isDarkmode ? "#262834" : themeColor.white,
+                          elevation: 10
+                        }}
+                        containerStyle={{ flexGrow: 1, flexShrink: 1, }}
+                        renderItem={(item, text) => (
+                          <Text style={{ color: isDarkmode ? themeColor.white : themeColor.dark, padding: 15, zIndex: 5 }}>{item.title}</Text>
+                        )}
+                        showClear={true}
+                        clearOnFocus={false}
+                        closeOnBlur={false}
+                        closeOnSubmit={true}
+                        dataSet={filterList}
+                        onClear={() => handleRemove(idx)}
+                        onSelectItem={(item) => {
+                          if (item) {
+                            let mealObj = undefined;
+                            // If the ingredient is in the database
+                            for (let i = 0; i < mealsList.length; i++) {
+                              if (mealsList[i].meal === item.title) {
+                                // Get the ingredient from the database
+                                mealObj = mealsList[i]
+                                let fieldset = fields
+                                // Update the ingredient set
+                                fieldset[idx]['serving'] = "1"
+
+                                if (mealObj.carbs != Infinity) {
+                                fieldset[idx]['carbs'] = mealObj.carbs
+                                }
+                                fieldset[idx]['unit'] = mealObj.unit
+                                setFields(fieldset)
+                                let servingSize = servingSizes;
+                                servingSize[idx] = mealObj.carbs;
+                                setServingSizes(servingSize)
+                              }
+                            }
+
+                            if (!mealObj) {
+                              return
+                            }
+                            // Make sure to update the database too
+                            handleChange(idx, "meal", item.title);
+                            
+                            let meals = [];
+                      
+                            get("meals").then(function (result) {
+                              for (let i = 0; i < Object.keys(result).length; i++) {
+                                meals.push({ id: String(i + 2), title: result[String(i)].meal });
+                              }
+                      
+                              get("recipes").then((result) => {
+                                let iterId = meals.length;
+                                for (let i = 0; i < result.length; i++) {
+                                  meals.push({ id: String(iterId + 2), title: result[i].name });
+                                  iterId += 1;
+                                }
+                      
+                              })
+                      
+                              setFilterList(meals);
+                          })
+                          
+                        }
+                        }}
+                      />
+                    </React.Fragment>
+
+                    <View style={{ marginVertical: 20 }}>
+                      <TextInput
+                        placeholder="Servings"
+                        onChangeText={e => {
+                          if (servingSizes[idx]) {
+                            let fieldset = fields
+                            fieldset[idx]['carbs'] = String(Number(e) * servingSizes[idx])
+                            setFields(fieldset)
+                          }
+                          handleChange(idx, "serving", e)
+                        }}
+                        defaultValue={field.serving}
+                        keyboardType="numeric"
+                      />
+                    </View>
+
+                    <View style={{ marginBottom: 20 }}>
+                      <TextInput
+                        placeholder="Carbs"
+                        onChangeText={e => handleChange(idx, "carbs", e)}
+                        defaultValue={field.carbs}
+                        keyboardType="numeric"
+                      />
+                    </View>
+
+                    <View style={{ marginBottom: 20 }}>
+                      <TextInput
+                        placeholder="Unit"
+                        onChangeText={e => handleChange(idx, "unit", e)}
+                        defaultValue={field.unit}
+                      />
+                    </View>
+
+                    <View>
+                      <HStack spacing={10} style={{ marginBottom: 10 }}>
+                        <CheckBox
+                          disabled={mainMealSelected && mainMeal != idx}
+                          value={mainMeal == idx || field['mainMeal']}
+                          onValueChange={(value) => {
+                            // Update the check to reflect the toggle's current state
+                            mainMealSelected = value
+                            if (value) {
+                              mainMeal = idx
+                            }
+                            else {
+                              mainMeal = undefined
+                            }
+                            handleChange(idx, "mainMeal", value)
+
+                          }}
+                        />
+                        <Text fontSize="lg">Main Meal</Text>
+                      </HStack>
+                    </View>
+
+                    <View>
+                      <Button
+                        style={{ marginTop: 10 }}
+                        leftContent={
+                          <Ionicons name="trash-outline" size={20} color={themeColor.white} />
+                        }
+                        text="Remove"
+                        status="danger"
+                        type="TouchableOpacity"
+                        onPress={() => { handleRemove(idx) }}
+                      />
+                    </View>
+                  </SectionContent>
+                </Section>
+              );
+            })}
+
+            <Button
+              style={{ marginVertical: 10, marginHorizontal: 20 }}
+              leftContent={
+                <Ionicons name="add-circle-outline" size={20} color={themeColor.white} />
+              }
+              text="Add New Food"
+              status="primary"
+              type="TouchableOpacity"
+              onPress={handleAdd}
+            />
+
+
+            {settingsMissing &&
+              <Text style={{ marginHorizontal: 20, marginVertical: 10 }}>
+                Please make sure your values are updated under the settings tab.
+              </Text>
             }
-          </Box>
-        </Center>
-      </View>
-    </ScrollView>
+
+            <Section style={{ marginBottom: 20, marginHorizontal: 20 }}>
+              <SectionContent>
+                <View>
+                  <Text fontSize="lg" style={{ textAlign: 'center' }}>
+                    Current Glucose Value: {sugarValue}
+                  </Text>
+                </View>
+                <View>
+                  <Text fontSize="lg" style={{ textAlign: 'center' }}>
+                    Last Recorded Glucose Value: {lastSugarValue}
+                  </Text>
+                </View>
+                <View>
+                  <Text fontSize="lg" style={{ textAlign: 'center' }}>
+                    Total Carbs: {totalCarb}
+                  </Text>
+                </View>
+                <View>
+                  <Text fontSize="lg" style={{ textAlign: 'center' }} color={foodUnits == "Not Available" ? "#ff0000" : "#000000"}>
+                    Food Units: {foodUnits}
+                  </Text>
+                </View>
+                <View>
+                  <Text fontSize="lg" style={{ textAlign: 'center' }} color={correction == "Not Available" ? "#ff0000" : "#000000"}>
+                    Correction Units: {correction}
+                  </Text>
+                </View>
+                <View>
+                  <Text fontSize="lg" style={{ textAlign: 'center' }} color={totalUnits == "Not Available" ? "#ff0000" : "#000000"}>
+                    Total Units: {totalUnits}
+                  </Text>
+                </View>
+                <View style={{ marginVertical: 10 }}>
+                  <Button style={{ marginHorizontal: 20, marginVertical: 10 }} text="Update Metadata in the Database" status="primary" onPress={() => { updateInsulinDB(); }} />
+                </View>
+              </SectionContent>
+            </Section>
+          </ScrollView>
+        }
+
+        {showSearchScreen && !showInsulinEditor &&
+          <ScrollView>
+            <Button style={{ marginHorizontal: 20, marginVertical: 10 }} text="All Options" status="primary" onPress={() => { setShowInsulinEditor(false); setshowSearchScreen(false); }} />
+
+            <View
+              style={{
+                marginHorizontal: 20,
+                marginVertical: 20,
+              }}
+            >
+              <TextInput
+                placeholder="Search..."
+                leftContent={
+                  <Ionicons
+                    name="search-circle"
+                    size={20}
+                    color={themeColor.gray300}
+                  />
+                }
+                onChangeText={e => {
+                  if (e == "") {
+                    mealFilter = []
+                    forceUpdate();
+                    return
+                  }
+                  mealFilter = [];
+
+                  // Loop through all of the ingredients and add the ones that match the search term to a filter list
+                  for (let i = 0; i < allMeals.length; i++) {
+                    if (allMeals[i].meal.toLowerCase().includes(e.toLowerCase())) {
+
+                      let date = new Date(allMeals[i].mealid.split(".")[3], Number(allMeals[i].mealid.split(".")[1]) - 1, allMeals[i].mealid.split(".")[2])
+                      mealFilter.push({
+                        title: allMeals[i].meal,
+                        carb: allMeals[i].carbs,
+                        mealid: allMeals[i].mealid,
+                        date: date,
+                        meal: allMeals[i].mealid.split(".")[4],
+                      })
+                    }
+                  }
+                  forceUpdate();
+                }}
+              />
+            </View>
+
+
+            {mealFilter.map((field, idx) => {
+              return (
+                <Section key={idx} style={{ marginBottom: 20, marginHorizontal: 20 }}>
+                  <SectionContent>
+                    <View style={{ marginBottom: 20 }}>
+                      <Text size="h3">{field.title}</Text>
+                    </View>
+                    <View style={{ marginBottom: 20 }}>
+                      <Text size="lg">Carbs: {field.carb}</Text>
+                    </View>
+                    <View style={{ marginBottom: 20 }}>
+                      <Text size="md">{field.date.toLocaleDateString()} - {field.meal}</Text>
+                    </View>
+                    <View style={{ marginBottom: 20 }}>
+                      <Button
+                        style={{ marginTop: 10 }}
+                        leftContent={
+                          <Ionicons name="arrow-forward-circle" size={20} color={themeColor.white} />
+                        }
+                        text="Visit Meal"
+                        status="primary"
+                        type="TouchableOpacity"
+                        onPress={() => { date = field.date; meal = field.mealid.split(".")[4]; fetchMeals(field.mealid); setShowInsulinEditor(true); setshowSearchScreen(false); }}
+                      />
+                    </View>
+                  </SectionContent>
+                </Section>
+              );
+            })}
+
+          </ScrollView>
+        }
+
+      </Layout>
     </KeyboardAvoidingView>
 
   );

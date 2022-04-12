@@ -1,20 +1,35 @@
 // Import the libraries needed
-import * as React from "react"
-import { StyleSheet, TextInput, KeyboardAvoidingView } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
-
-import { Box, VStack, FormControl, Button, HStack, Center, View, ScrollView, Icon } from "native-base";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
+import * as React from "react";
+import {
+  KeyboardAvoidingView, ScrollView,
+  View
+} from "react-native";
+import {
+  Button, Layout, Section, SectionContent, TextInput,
+  themeColor, TopNav, useTheme
+} from "react-native-rapi-ui";
+
+
+
+
 
 // Initialize the database functions
 const set = async (key, value) => { try { await AsyncStorage.setItem(key, value) } catch (e) { console.log(e) } }
 const setObj = async (key, value) => { try { const jsonValue = JSON.stringify(value); await AsyncStorage.setItem(key, jsonValue) } catch (e) { console.log(e) } }
 const get = async (key) => { try { const value = await AsyncStorage.getItem(key); if (value !== null) { try { return JSON.parse(value) } catch { return value } } } catch (e) { console.log(e) } }
 
+// Initialize the variables
+let filterAllowed = []
 
 export default function App() {
   // Initialize the state
-  const [fields, setFields] = React.useState([{}]);
+  const [, forceUpdate] = React.useReducer(x => x + 1, 0);
+  const navigation = useNavigation();
+  const { isDarkmode, setTheme } = useTheme();
+  const [fields, setFields] = React.useState([]);
 
   // Run once the app has loaded
   React.useEffect(() => {
@@ -26,17 +41,20 @@ export default function App() {
         meals = {};
       }
 
+      let fieldsToSet = []
+
       // Set the ingredients in the state
       for (let i = 0; i < Object.keys(meals).length; i++) {
-        fields.push({
+        fieldsToSet.push({
           meal: meals[String(i)].meal,
           carbs: meals[String(i)].carbs,
           unit: meals[String(i)].unit
         });
+        filterAllowed.push(i);
       }
 
-      // Remove the empty object that's left over
-      handleRemove(0);
+      setFields(fieldsToSet);
+
     });
   }, []);
 
@@ -55,14 +73,25 @@ export default function App() {
         meals = {};
       }
 
+      // Find the meals in which the ingredient is used
+      let usedMeals = []
+      if (meals[i]) {
+        if (meals[i].usedMeals) {
+          usedMeals = meals[i].usedMeals
+        }
+      }
+
       meals[i] = {
         meal: fields[i].meal,
         carbs: fields[i].carbs,
         unit: fields[i].unit,
-        usedMeals: meals[i].usedMeals
-      };
+        usedMeals: usedMeals
+      }
 
-      setObj("meals", meals)
+      const values = [...fields];
+      if (values[i]['meal'] && values[i]['meal'] != "") {
+        setObj("meals", meals)
+      }
     });
 
 
@@ -74,7 +103,8 @@ export default function App() {
     const values = [...fields];
     values.push({ meal: null, carbs: null, unit: null, usedMeals: [] });
     setFields(values);
-    setObj("meals", values);
+    filterAllowed.push(fields.length - 1);
+    forceUpdate();
   }
 
   // What happens when the delete button is clicked
@@ -92,79 +122,134 @@ export default function App() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={{ flex: 1 }}
     >
-    <ScrollView contentContainerStyle={{ flexGrow: 2 }}>
-      <View style={{ padding: 40 }}>
-        <Center>
-          <Box safeArea p="2" py="2" w="90%" maxW="290" h="90%">
 
-            <VStack space={10} mt="5">
-              { /* Loop through the ingredients */
-                fields.map((field, idx) => {
+      <Layout>
+        <TopNav
+          leftContent={
+            <Ionicons
+              name="chevron-back"
+              size={20}
+              color={isDarkmode ? themeColor.white : themeColor.black}
+            />
+          }
+          leftAction={() => navigation.goBack()}
+          middleContent="Ingredients"
+          rightContent={
+            <Ionicons
+              name={isDarkmode ? "sunny" : "moon"}
+              size={20}
+              color={isDarkmode ? themeColor.white100 : themeColor.dark}
+            />
+          }
+          rightAction={() => {
+            if (isDarkmode) {
+              setTheme("light");
+            } else {
+              setTheme("dark");
+            }
+          }}
+        />
+        <ScrollView>
+          <View
+            style={{
+              marginHorizontal: 20,
+              marginVertical: 20,
+            }}
+          >
+            <TextInput
+              placeholder="Search..."
+              leftContent={
+                <Ionicons
+                  name="search-circle"
+                  size={20}
+                  color={themeColor.gray300}
+                />
+              }
+              onChangeText={e => {
+                // When something is searched, get all ingredients
+                let values = [...fields];
+                // Clean the filter list
+                let allowed = []
+                // Loop through all the ingredients
+                for (let i = 0; i < values.length; i++) {
+                  // If the ingredient contains the search term
+                  if (values[i].meal.toLowerCase().includes(e.toLowerCase())) {
+                    // Add the ingredient to the filter list
+                    allowed.push(i);
+                  }
+                }
 
-                  // make a style object for the input
-                  const styles = StyleSheet.create({
-                    input: {
-                      height: 40,
-                      borderWidth: 1,
-                      padding: 10,
-                      borderRadius: 5,
-                      marginBottom: 5,
-                      width: 200
-                    },
-                  });
+                // Set the filter list
+                filterAllowed = allowed;
+                forceUpdate();
+              }}
+            />
+          </View>
 
-                  return (
-                    <HStack space={7}>
-                      <View alignItems={'flex-start'}>
-                        <FormControl key={`${field}-${idx}`}>
+          {
+            fields.map((field, idx) => {
+              return (
+                <View>
+                  {filterAllowed.includes(idx) &&
+
+                    <Section style={{ marginHorizontal: 20, marginTop: 20 }}>
+                      <SectionContent>
+                        <View style={{ marginBottom: 20 }}>
                           <TextInput
                             placeholder="Ingredient name"
-                            style={styles.input}
                             onChangeText={e => handleChange(idx, "meal", e)}
-                            value={field.meal}
+                            defaultValue={field.meal}
                           />
+                        </View>
+
+                        <View style={{ marginBottom: 20 }}>
                           <TextInput
                             placeholder="Carbs"
-                            style={styles.input}
                             onChangeText={e => handleChange(idx, "carbs", e)}
-                            value={field.carbs}
+                            defaultValue={field.carbs}
                             keyboardType="numeric"
                           />
+                        </View>
+
+                        <View style={{ marginBottom: 20 }}>
                           <TextInput
                             placeholder="Unit (e.g. cup, oz, etc.)"
-                            style={styles.input}
                             onChangeText={e => handleChange(idx, "unit", e)}
-                            value={field.unit}
+                            defaultValue={field.unit}
                           />
+                        </View>
 
-                        </FormControl>
-                      </View>
-
-                      <Button size="lg" colorScheme="error" onPress={() => handleRemove(idx, field)} variant="outline">
-                        <Icon
-                          color='error.500'
-                          size="8"
-                          as={<Ionicons name="trash-outline" />}
-                        />
-                      </Button>
-
-                    </HStack>
-                  );
-                })}
-
-              <Button leftIcon={<Icon
-                color='white'
-                size="8"
-                as={<Ionicons name="add-outline" />}
-              />}
-
-                onPress={handleAdd}
-              >Add Ingredient</Button>
-            </VStack>
-          </Box>
-        </Center>
-      </View>
-    </ScrollView>
+                        <View>
+                          <Button
+                            style={{ marginTop: 10 }}
+                            leftContent={
+                              <Ionicons name="trash-outline" size={20} color={themeColor.white} />
+                            }
+                            text="Remove"
+                            status="danger"
+                            type="TouchableOpacity"
+                            onPress={() => { handleRemove(idx) }}
+                          />
+                        </View>
+                      </SectionContent>
+                    </Section>
+                  }
+                </View>
+              )
+            })
+          }
+          <Button
+            style={{ marginVertical: 10, marginHorizontal: 20 }}
+            leftContent={
+              <Ionicons name="add-circle-outline" size={20} color={themeColor.white} />
+            }
+            text="Add New Ingredient"
+            status="primary"
+            type="TouchableOpacity"
+            onPress={handleAdd}
+          />
+        </ScrollView>
+      </Layout>
     </KeyboardAvoidingView>
   );
 }
