@@ -221,6 +221,17 @@ export default App = () => {
               </View>
             </TouchableOpacity>
 
+            <TouchableOpacity onPress={() => navigation.navigate("Pen")}>
+              <View style={styles.listItem}>
+                <Text fontWeight="medium">{"Insulin Pen"}</Text>
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={isDarkmode ? themeColor.white : themeColor.black}
+                />
+              </View>
+            </TouchableOpacity>
+
 
             <TouchableOpacity style={{ marginTop: 50 }} onPress={() => {
               // Delete the login information, then go back to login

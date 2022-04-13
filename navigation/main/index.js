@@ -2,13 +2,17 @@
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import React from "react";
-import MealsScreen from '../../screens/foods';
-import HomeScreen from '../../screens/home';
-import App from "../../screens/index";
-import InsulinScreen from '../../screens/insulin';
+
 // Import all of the screens
+
+import App from "../../screens/index";
 import Login from "../../screens/login";
+
+import HomeScreen from '../../screens/home';
+import MealsScreen from '../../screens/foods';
+import InsulinScreen from '../../screens/insulin';
 import RecipesScreen from '../../screens/recipes';
+import PenScreen from '../../screens/pen';
 import SettingsScreen from '../../screens/settings';
 
 
@@ -32,6 +36,7 @@ const Main = () => {
         <MainStack.Screen name="Ingredients" component={MealsScreen} />
         <MainStack.Screen name="Insulin" component={InsulinScreen} />
         <MainStack.Screen name="Recipes" component={RecipesScreen} />
+        <MainStack.Screen name="Pen" component={PenScreen} />
         <MainStack.Screen name="Settings" component={SettingsScreen} />
 
       </MainStack.Navigator>
