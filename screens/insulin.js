@@ -5,14 +5,14 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useNavigation } from '@react-navigation/native';
 import { ma } from 'moving-averages';
 import * as React from "react";
-import { KeyboardAvoidingView, ScrollView, StyleSheet, View, SafeAreaView } from "react-native";
+import { KeyboardAvoidingView, ScrollView, StyleSheet, View, Alert } from "react-native";
 import { AutocompleteDropdown } from 'react-native-autocomplete-dropdown';
 import { TouchableOpacity } from "react-native-gesture-handler";
 import {
   Button,
   CheckBox, Layout, Section, SectionContent, Text,
   TextInput,
-  themeColor, TopNav, useTheme
+  themeColor, TopNav, useTheme, Picker
 } from "react-native-rapi-ui";
 import { HStack } from 'react-native-stacks';
 import { Dimensions } from 'react-native';
@@ -30,6 +30,7 @@ const delkey = async (key, value) => { try { await AsyncStorage.removeItem(key) 
 let foodUnits = "";
 let correction = "";
 let totalUnits = "";
+let unitsRounded = 0;
 let meal = "";
 let factors = {};
 let readings = [];
@@ -45,7 +46,8 @@ let allMeals = [];
 let mealFilter = [];
 let mealDB = [];
 let recipeDB = [];
-
+let insulinPenSelected = null;
+let penOptions = []
 let date = new Date();
 
 export default function App() {
@@ -264,6 +266,9 @@ export default function App() {
 
         // Calculate the total insulin
         totalUnits = String((Number(foodUnits) + Number(correction)).toFixed(2));
+        unitsRounded = String(Math.round(Number(totalUnits)));
+
+        console.log(unitsRounded)
 
         // Show the user a message if there are no settings to use to calculate
         if (String(foodUnits) == "NaN") {
@@ -481,6 +486,16 @@ export default function App() {
 
       // Set the date to the current date
       date = new Date();
+
+      penOptions = []
+      get('pens').then((result) => {
+        for (let i=0; i<result.length; i++) {
+          if (!result[i].discarded) {
+          penOptions.push({label: result[i].type + " | " + result[i].location + " | " + (result[i].notes || "No note") + " - " + result[i].amount, value: i})
+          }
+        }
+      })
+      forceUpdate();
 
       // Set the ingredients to a variable, later used for search
       get("meals").then((result) => { mealDB = result });
@@ -1026,6 +1041,68 @@ export default function App() {
                   <Button style={{ marginHorizontal: 20, marginVertical: 10 }} text="Update Metadata in the Database" status="primary" onPress={() => { updateInsulinDB(); }} />
                 </View>
               </SectionContent>
+            </Section>
+
+            <Section style={{ marginBottom: 20, marginHorizontal: 20 }}>
+            <SectionContent>
+              <View style={{marginBottom: 20}}>
+                <Text fontSize="lg" style={{ textAlign: 'center' }}>Take Insulin</Text>
+              </View>
+              <View style={{marginBottom: 20}}>
+              <Picker
+                  items={penOptions}
+                  value={insulinPenSelected}
+                  placeholder="Pick Insulin Pen"
+                  onValueChange={(val) => insulinPenSelected = val}
+              />
+              </View>
+              <View style={{marginBottom: 20}}>
+                <TextInput
+                  placeholder="Amount of insulin to take"
+                  onChangeText={e => {
+                    unitsRounded = e;
+                  }}
+                  defaultValue={unitsRounded}
+                  keyboardType="numeric"
+                  />
+              </View>
+              <View style={{marginBottom: 20}}>
+                <Button
+                leftContent={
+                  <Ionicons name="medical" size={20} color={themeColor.white} />
+                }
+                text="Take Insulin"
+                status="primary"
+                type="TouchableOpacity"
+                onPress={() => { 
+                  get("pens").then(result => {
+                    let penData = result
+                    let insulinPen = penData[insulinPenSelected];
+                    let history = insulinPen.history;
+                    history.push({
+                      date: date.toLocaleDateString() + " " + date.toLocaleTimeString(),
+                      units: unitsRounded,
+                      note: "Taken at " + meal
+                    })
+
+                    insulinPen.history = history;
+                    insulinPen.amount = String(insulinPen.amount - Number(unitsRounded) - Number(penData[insulinPenSelected].autoDiscard));
+                    penData[insulinPenSelected] = insulinPen;
+                    setObj("pens", penData);
+                    Alert.alert(
+                      "Success", 
+                      "Insulin taken successfully!",
+                      [
+                        { 
+                          text: "OK"
+                        }
+                      ]
+                      );
+                  })
+                 }}
+                />
+              </View>
+            </SectionContent>
             </Section>
           </ScrollView>
         }
