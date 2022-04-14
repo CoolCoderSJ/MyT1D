@@ -168,7 +168,7 @@ export default function App() {
                         </View>
 
                         <View style={{ marginBottom: 20 }}>
-                          <Text>Location</Text>
+                          <Text style={{marginBottom: 10}}>Location</Text>
                           <TextInput
                             placeholder="Location"
                             onChangeText={e => handleChange(idx, "location", e)}
@@ -177,7 +177,7 @@ export default function App() {
                         </View>
 
                         <View style={{ marginBottom: 20 }}>
-                          <Text>Amount of units</Text>
+                          <Text style={{marginBottom: 10}}>Amount of units</Text>
                           <TextInput
                             placeholder="Amount of units"
                             onChangeText={e => handleChange(idx, "amount", e)}
@@ -187,7 +187,7 @@ export default function App() {
                         </View>
 
                         <View style={{ marginBottom: 20 }}>
-                          <Text>Notes</Text>
+                          <Text style={{marginBottom: 10}}>Notes</Text>
                           <TextInput
                             placeholder="Notes"
                             onChangeText={e => handleChange(idx, "notes", e)}
@@ -196,7 +196,7 @@ export default function App() {
                         </View>
 
                         <View style={{ marginBottom: 20 }}>
-                          <Text>Units to automatically discard</Text>
+                          <Text style={{marginBottom: 10}}>Units to automatically discard</Text>
                           <TextInput
                             placeholder=""
                             onChangeText={e => handleChange(idx, "autoDiscard", e)}
