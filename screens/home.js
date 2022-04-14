@@ -51,11 +51,12 @@ function Home() {
     },
   });
 
+
   // Run once the app has loaded
   React.useEffect(() => {
     // Run the function every time the user switches to the screen
     const refreshData = navigation.addListener('focus', () => {
-
+      
       // Get the total number of foods and set it in the state
       get("meals").then(function (result) {
         if (result) {

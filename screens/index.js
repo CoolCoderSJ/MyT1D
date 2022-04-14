@@ -5,7 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import * as React from 'react';
 import {
-  ScrollView, StyleSheet, View
+  ScrollView, StyleSheet, View, Alert
 } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import {
@@ -45,6 +45,39 @@ export default App = () => {
       alignItems: "center",
     },
   });
+
+  get("pens").then(pens => {
+    for (let i=0; i<pens.length; i++) {
+      let alertedDays = pens[i].alertedDays || [];
+      let startDate = new Date(pens[i].takenOut);
+      let currentDate = new Date();
+      let diffTime = Math.abs(currentDate - startDate);
+      let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+
+      console.log(alertedDays)
+      console.log(diffDays)
+      console.log(pens[i])
+      
+      if (diffDays >= 27) {
+        if (!alertedDays.includes(currentDate.toLocaleDateString()) && !pens[i].discarded) {
+          console.log(currentDate.toLocaleDateString(), alertedDays)
+          Alert.alert(
+            "Alert", 
+            `Your ${pens[i].type} pen with ${pens[i].amount} units left located at ${pens[i].location} has been out for ${diffDays} days. Your pen is about to expire soon.`,
+            [
+              { 
+                text: "OK"
+              }
+            ]
+          );
+
+          alertedDays.push(currentDate.toLocaleDateString());
+          pens[i].alertedDays = alertedDays;
+          setObj("pens", pens);
+        }
+      }
+    }
+  })
 
 
   // Get the login information from the database

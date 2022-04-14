@@ -53,6 +53,7 @@ export default function App() {
             history: pens[i].history,
             takenOut: new Date(pens[i].takenOut),
             discarded: pens[i].discarded || false,
+            autoDiscard: pens[i].autoDiscard || 2,
             });
 
             display.push({
@@ -78,7 +79,7 @@ export default function App() {
 
   function handleAdd() {
     const values = [...fields];
-    values.push({ type: null, location: null, amount: null, notes: null, takenOut: new Date(), history: [], discarded: false });
+    values.push({ type: null, location: null, amount: null, notes: null, takenOut: new Date(), history: [], discarded: false, autoDiscard: null });
     display.push({ name: "Show", icon: "chevron-down-circle" })
     setFields(values);
     forceUpdate();
@@ -167,6 +168,7 @@ export default function App() {
                         </View>
 
                         <View style={{ marginBottom: 20 }}>
+                          <Text>Location</Text>
                           <TextInput
                             placeholder="Location"
                             onChangeText={e => handleChange(idx, "location", e)}
@@ -175,6 +177,7 @@ export default function App() {
                         </View>
 
                         <View style={{ marginBottom: 20 }}>
+                          <Text>Amount of units</Text>
                           <TextInput
                             placeholder="Amount of units"
                             onChangeText={e => handleChange(idx, "amount", e)}
@@ -184,10 +187,21 @@ export default function App() {
                         </View>
 
                         <View style={{ marginBottom: 20 }}>
+                          <Text>Notes</Text>
                           <TextInput
                             placeholder="Notes"
                             onChangeText={e => handleChange(idx, "notes", e)}
                             defaultValue={field.notes}
+                          />
+                        </View>
+
+                        <View style={{ marginBottom: 20 }}>
+                          <Text>Units to automatically discard</Text>
+                          <TextInput
+                            placeholder=""
+                            onChangeText={e => handleChange(idx, "autoDiscard", e)}
+                            defaultValue={field.autoDiscard}
+                            keyboardType="numeric"
                           />
                         </View>
 

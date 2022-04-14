@@ -1088,7 +1088,7 @@ export default function App() {
                     })
 
                     insulinPen.history = history;
-                    insulinPen.amount = String(insulinPen.amount - Number(unitsRounded));
+                    insulinPen.amount = String(insulinPen.amount - Number(unitsRounded) - Number(penData[insulinPenSelected].autoDiscard));
                     penData[insulinPenSelected] = insulinPen;
                     setObj("pens", penData);
                     Alert.alert(
