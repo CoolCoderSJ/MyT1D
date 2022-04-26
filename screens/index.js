@@ -19,10 +19,43 @@ import {
 const setObj = async (key, value) => { try { const jsonValue = JSON.stringify(value); await AsyncStorage.setItem(key, jsonValue) } catch (e) { console.log(e) } }
 const get = async (key) => { try { const value = await AsyncStorage.getItem(key); if (value !== null) { try { return JSON.parse(value) } catch { return value } } } catch (e) { console.log(e) } }
 const delkey = async (key, value) => { try { await AsyncStorage.removeItem(key) } catch (e) { console.log(e) } }
+const getAll = async () => { try { const keys = await AsyncStorage.getAllKeys(); return keys } catch (error) { console.error(error) } }
 
 // Whether the app is loading or not, used to show and hide the loading spinner
 let isLoading = true;
 
+setInterval(() => {
+  let loginInfo = null;
+  let merged = null;
+
+  get("login").then(res => {
+    if (res) {
+
+      loginInfo = res;
+      
+      getAll().then(allKeys => {
+
+      for (let i=0; i<allKeys.length; i++) {
+
+        get(allKeys[i]).then(localItem => {
+          return localItem
+        }).then((localItem) => {
+        axios.get(`https://database.myt1d.repl.co/${loginInfo.username}/${loginInfo.password}/${allKeys[i]}`)
+        .then(response => {
+          merged = Object.assign(localItem, response.data)
+          console.log("merged", merged, "\n\n")
+          axios.post(`https://database.myt1d.repl.co/${loginInfo.username}/${loginInfo.password}/${allKeys[i]}`, merged)
+          setObj(allKeys[i], merged)
+        })
+        })
+
+    }
+
+    });
+
+    }
+  })
+}, 5000);
 
 export default App = () => {
 
@@ -53,14 +86,9 @@ export default App = () => {
       let currentDate = new Date();
       let diffTime = Math.abs(currentDate - startDate);
       let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-
-      console.log(alertedDays)
-      console.log(diffDays)
-      console.log(pens[i])
       
       if (diffDays >= 27) {
         if (!alertedDays.includes(currentDate.toLocaleDateString()) && !pens[i].discarded) {
-          console.log(currentDate.toLocaleDateString(), alertedDays)
           Alert.alert(
             "Alert", 
             `Your ${pens[i].type} pen with ${pens[i].amount} units left located at ${pens[i].location} has been out for ${diffDays} days. Your pen is about to expire soon.`,
