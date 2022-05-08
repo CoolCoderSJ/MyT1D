@@ -75,6 +75,7 @@ export default function App() {
     values[i][type] = value;
     setFields(values);
     setObj("pens", values);
+    get("login").then(res => {if (res) {loginInfo = res; axios.post(`https://database.myt1d.repl.co/${loginInfo.username}/${loginInfo.password}/pens`, values)}});
   }
 
   function handleAdd() {
@@ -92,6 +93,7 @@ export default function App() {
     values.splice(i, 1);
     setFields(values);
     setObj("pens", values);
+    get("login").then(res => {if (res) {loginInfo = res; axios.post(`https://database.myt1d.repl.co/${loginInfo.username}/${loginInfo.password}/pens`, values)}});
     }
 
     if (type == "log") {
@@ -101,6 +103,7 @@ export default function App() {
         values[i].history = history;
         setFields(values);
         setObj("pens", values);
+        get("login").then(res => {if (res) {loginInfo = res; axios.post(`https://database.myt1d.repl.co/${loginInfo.username}/${loginInfo.password}/pens`, values)}});
     }
   }
 
@@ -222,7 +225,7 @@ export default function App() {
                             text="Discard"
                             status="warning"
                             type="TouchableOpacity"
-                            onPress={() => { const values = [...fields]; values[idx].discarded = true; setFields(values); setObj("pens", values); forceUpdate(); }}
+                            onPress={() => { const values = [...fields]; values[idx].discarded = true; setFields(values); setObj("pens", values); get("login").then(res => {if (res) {loginInfo = res; axios.post(`https://database.myt1d.repl.co/${loginInfo.username}/${loginInfo.password}/pens`, values)}});; forceUpdate(); }}
                           />
 
                           <Button

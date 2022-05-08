@@ -124,6 +124,7 @@ export default function App() {
 
     if (value) {
       setObj(`recipes`, recipes);
+      get("login").then(res => {if (res) {loginInfo = res; axios.post(`https://database.myt1d.repl.co/${loginInfo.username}/${loginInfo.password}/recipes`, recipes)}});
     }
 
     // Calculate the carbs
@@ -154,6 +155,7 @@ export default function App() {
     // Remove the item from the database
     recipes[recipeId]['meals'] = values;
     setObj(`recipes`, recipes);
+    get("login").then(res => {if (res) {loginInfo = res; axios.post(`https://database.myt1d.repl.co/${loginInfo.username}/${loginInfo.password}/recipes`, recipes)}});
     // Calculate the carbs
     calculateCarbs()
   }
@@ -230,6 +232,7 @@ export default function App() {
     recipes[recipeId]['carbs'] = totalcarbs;
     forceUpdate()
     setObj(`recipes`, recipes);
+    get("login").then(res => {if (res) {loginInfo = res; axios.post(`https://database.myt1d.repl.co/${loginInfo.username}/${loginInfo.password}/recipes`, recipes)}});
   }
 
 
@@ -322,7 +325,7 @@ export default function App() {
                           text="Remove this recipe"
                           status="danger"
                           type="TouchableOpacity"
-                          onPress={() => { recipes.splice(idx, 1); setObj('recipes', recipes); forceUpdate() }}
+                          onPress={() => { recipes.splice(idx, 1); setObj('recipes', recipes); get("login").then(res => {if (res) {loginInfo = res; axios.post(`https://database.myt1d.repl.co/${loginInfo.username}/${loginInfo.password}/recipes`, recipes)}}); forceUpdate() }}
                         />
                       </View>
                     }
@@ -371,6 +374,7 @@ export default function App() {
                       onChangeText={(value) => {
                         recipes[recipeId]['name'] = value;
                         setObj(`recipes`, recipes);
+                        get("login").then(res => {if (res) {loginInfo = res; axios.post(`https://database.myt1d.repl.co/${loginInfo.username}/${loginInfo.password}/recipes`, recipes)}});
                       }}
                       defaultValue={recipes[recipeId]['name']}
                       placeholder="Recipe Name"
@@ -382,6 +386,7 @@ export default function App() {
                       onChangeText={(value) => {
                         recipes[recipeId]['serving'] = value;
                         setObj(`recipes`, recipes);
+                        get("login").then(res => {if (res) {loginInfo = res; axios.post(`https://database.myt1d.repl.co/${loginInfo.username}/${loginInfo.password}/recipes`, recipes)}});
                         calculateCarbs()
                       }}
                       defaultValue={recipes[recipeId]['serving']}
@@ -394,6 +399,7 @@ export default function App() {
                       onChangeText={(value) => {
                         recipes[recipeId]['unit'] = value;
                         setObj(`recipes`, recipes);
+                        get("login").then(res => {if (res) {loginInfo = res; axios.post(`https://database.myt1d.repl.co/${loginInfo.username}/${loginInfo.password}/recipes`, recipes)}});
                       }}
                       defaultValue={recipes[recipeId]['unit']}
                       placeholder="Units (Plate, Bowl, Bag, etc.)"

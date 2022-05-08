@@ -56,6 +56,7 @@ const Settings = () => {
   // Update the database when the user types anything into any textbox
   const onSave = () => {
     setObj('factors', savedSettings)
+    get("login").then(res => {if (res) {loginInfo = res; axios.post(`https://database.myt1d.repl.co/${loginInfo.username}/${loginInfo.password}/factors`, savedSettings)}});
   };
 
 

@@ -323,6 +323,10 @@ export default function App() {
         dexVal: dexVal,
         totalCarb: totalCarb,
       })
+      get("login").then(res => {if (res) {loginInfo = res; axios.post(`https://database.myt1d.repl.co/${loginInfo.username}/${loginInfo.password}/${`meal.${date.getMonth() + 1}.${date.getDate()}.${date.getFullYear()}.${meal}metadata`}`, {
+        dexVal: dexVal,
+        totalCarb: totalCarb,
+      })}});
 
     })
   }
@@ -348,6 +352,7 @@ export default function App() {
 
     // Update the meals database then calculate the insulin
     setObj(id, values).then(() => calculateInsulin());
+    get("login").then(res => {if (res) {loginInfo = res; axios.post(`https://database.myt1d.repl.co/${loginInfo.username}/${loginInfo.password}/${id}`, values)}});
 
     // Get all ingredients 
     get("meals").then(function (result) {
@@ -446,12 +451,14 @@ export default function App() {
 
       // Update the foods database
       setObj("meals", foods);
+      get("login").then(res => {if (res) {loginInfo = res; axios.post(`https://database.myt1d.repl.co/${loginInfo.username}/${loginInfo.password}/meals`, foods)}});
 
       // Update the state
       setFields(values);
 
       // Update the meals database then calculate the insulin
       setObj(id, values).then(() => calculateInsulin());
+      get("login").then(res => {if (res) {loginInfo = res; axios.post(`https://database.myt1d.repl.co/${loginInfo.username}/${loginInfo.password}/${id}`, values)}});
 
     })
 
@@ -468,6 +475,7 @@ export default function App() {
     // Update the state and database
     setFields(values);
     setObj(`meal.${date.getMonth() + 1}.${date.getDate()}.${date.getFullYear()}.${meal}`, values);
+    get("login").then(res => {if (res) {loginInfo = res; axios.post(`https://database.myt1d.repl.co/${loginInfo.username}/${loginInfo.password}/${`meal.${date.getMonth() + 1}.${date.getDate()}.${date.getFullYear()}.${meal}`}`, values)}});
   }
 
   // What happens when a delete button is clicked
@@ -478,6 +486,7 @@ export default function App() {
     // Update the state and database
     setFields(values);
     setObj(`meal.${date.getMonth() + 1}.${date.getDate()}.${date.getFullYear()}.${meal}`, values).then(() => calculateInsulin())
+    get("login").then(res => {if (res) {loginInfo = res; axios.post(`https://database.myt1d.repl.co/${loginInfo.username}/${loginInfo.password}/${`meal.${date.getMonth() + 1}.${date.getDate()}.${date.getFullYear()}.${meal}`}`, values)}});
   }
 
   // Update the dropdown data every time the user comes back to this screen from another
@@ -1089,6 +1098,7 @@ export default function App() {
                     insulinPen.amount = String(insulinPen.amount - Number(unitsRounded) - Number(penData[insulinPenSelected].autoDiscard));
                     penData[insulinPenSelected] = insulinPen;
                     setObj("pens", penData);
+                    get("login").then(res => {if (res) {loginInfo = res; axios.post(`https://database.myt1d.repl.co/${loginInfo.username}/${loginInfo.password}/pens`, penData)}});
                     Alert.alert(
                       "Success", 
                       "Insulin taken successfully!",

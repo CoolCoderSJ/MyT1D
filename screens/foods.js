@@ -91,6 +91,7 @@ export default function App() {
       const values = [...fields];
       if (values[i]['meal'] && values[i]['meal'] != "") {
         setObj("meals", meals)
+        get("login").then(res => {if (res) {loginInfo = res; axios.post(`https://database.myt1d.repl.co/${loginInfo.username}/${loginInfo.password}/meals`, meals)}});
       }
     });
 
@@ -114,6 +115,7 @@ export default function App() {
     values.splice(i, 1);
     setFields(values);
     setObj("meals", values);
+    get("login").then(res => {if (res) {loginInfo = res; axios.post(`https://database.myt1d.repl.co/${loginInfo.username}/${loginInfo.password}/meals`, values)}});
   }
 
 
