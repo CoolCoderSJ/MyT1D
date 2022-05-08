@@ -16,7 +16,6 @@ import {
 } from "react-native-rapi-ui";
 import { HStack } from 'react-native-stacks';
 import { Dimensions } from 'react-native';
-import DatePicker from 'react-native-datepicker'
 
 // Initialize the database functions
 const set = async (key, value) => { try { await AsyncStorage.setItem(key, value) } catch (e) { console.log(e) } }
@@ -734,54 +733,23 @@ export default function App() {
 
         {showInsulinEditor && !showSearchScreen &&
           <ScrollView>
+              <View style={{ marginHorizontal: 20, marginVertical: 20 }}>
+              <Button style={{ marginHorizontal: 20 }} text={(date.getMonth()+1) + "/" + date.getDate() + "/" + date.getFullYear()} status="primary" onPress={() => { if (show == true) {setShow(false)} else {setShow(true)} }} />
 
-              <View style={{ flexDirection: "row", justifyContent: "center", marginVertical: 20, width: "100%" }}>
-              <DatePicker
-                style={{
-                  width: Dimensions.get("window").width * 0.9,
-                }}
-                duration={30}
-                format="MM-DD-YYYY"
-                placeholder='Select Date'
-                date={date}
-                mode="date"
-                confirmBtnText="Confirm"
-                cancelBtnText="Cancel"
-                showIcon={false}
-                is24Hour={false}
-                display="default"
-                customStyles={{
-                  dateInput: {
-                    borderRadius: 8,
-                    width: "100%",
-                    marginVertical: 10
-                  },
-                  dateText: {
-                    color: isDarkmode ? themeColor.white : themeColor.dark,
-                    fontFamily: "Ubuntu_400Regular",
-                    fontSize: 18
-                  },
-                  datePickerCon: {
-                    display: "flex",
-                    flexDirection: "row",
-                    justifyContent: "center",
-                    alignItems: "center",
-                  },
-                  datePicker: {
-                    width: Dimensions.get("window").width,
-                    backgroundColor: isDarkmode ? "#262834" : themeColor.white,
-                    paddingHorizontal: Dimensions.get("window").width * 0.35
-                  }
-
-                }}
-                onDateChange={(selectedDate) => {
-                  // Update the date
-                  date = new Date(Number(selectedDate.split("-")[2]), Number(selectedDate.split("-")[0])-1, Number(selectedDate.split("-")[1])) || date
-                  setShow(false);
-                  fetchMeals();
-                  forceUpdate();
-                }}
-              />
+              {show && (
+                      <DateTimePicker
+                        value={date}
+                        mode="date"
+                        is24Hour={true}
+                        onChange={(evt, selectedDate) => {
+                          // Update the date
+                          date = selectedDate || date
+                          setShow(false);
+                          fetchMeals();
+                          forceUpdate();
+                        }}
+                      />
+                    )}
               </View>
 
             <Button style={{ marginHorizontal: 20 }} text="All Meal Options" status="primary" onPress={() => { setShowInsulinEditor(false) }} />
