@@ -16,7 +16,6 @@ import {
 } from "react-native-rapi-ui";
 import { HStack } from 'react-native-stacks';
 import { Dimensions } from 'react-native';
-import DatePicker from 'react-native-datepicker'
 
 // Initialize the database functions
 const set = async (key, value) => { try { await AsyncStorage.setItem(key, value) } catch (e) { console.log(e) } }
@@ -79,7 +78,7 @@ export default function App() {
 
     // Fetch the ingredients from a database
     get(idtofetch).then((result) => {
-      
+
       if (result) {
         // Set the state to the ingredients found
         setFields(result);
@@ -229,7 +228,7 @@ export default function App() {
           totalCarb += Number(values[i].carbs);
         }
       };
-      
+
       // Get the dexcom values
       get("readings").then((result) => {
         readings = result;
@@ -554,11 +553,6 @@ export default function App() {
   }, [navigation]);
 
 
-  // Show the date picker when the user clicks on the date
-  const showDatePicker = () => {
-    setShow(true);
-  }
-
   // Create a style object for the main menu selections
   const styles = StyleSheet.create({
     listItem: {
@@ -665,35 +659,37 @@ export default function App() {
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => { setShowInsulinEditor(false); 
-            
-            // Update the variables for the search screen
+            <TouchableOpacity onPress={() => {
+              setShowInsulinEditor(false);
 
-            // Make a list of all of the ingredients ever used in any meal
-            // Used for searching
-            getAll().then(function (result) {
-              allMeals = [];
+              // Update the variables for the search screen
 
-              // For each database key
-              for (let i = 0; i < result.length; i++) {
-                // If the key refers to a meal
-                if (result[i].includes("meal") && !result[i].includes("metadata") && result != "meals") {
-                  get(result[i]).then(function (data) {
-                    if (data && !result[i].includes("meals") && (result[i].includes("Breakfast") || result[i].includes("Lunch") || result[i].includes("PMSnack") || result[i].includes("Dinner") || result[i].includes("NightSnack"))) {
-                      for (let a = 0; a < data.length; a++) {
-                        // Add it to the list
-                        let obj = {
-                          meal: data[a].meal,
-                          carbs: data[a].carbs,
-                          mealid: result[i],
+              // Make a list of all of the ingredients ever used in any meal
+              // Used for searching
+              getAll().then(function (result) {
+                allMeals = [];
+
+                // For each database key
+                for (let i = 0; i < result.length; i++) {
+                  // If the key refers to a meal
+                  if (result[i].includes("meal") && !result[i].includes("metadata") && result != "meals") {
+                    get(result[i]).then(function (data) {
+                      if (data && !result[i].includes("meals") && (result[i].includes("Breakfast") || result[i].includes("Lunch") || result[i].includes("PMSnack") || result[i].includes("Dinner") || result[i].includes("NightSnack"))) {
+                        for (let a = 0; a < data.length; a++) {
+                          // Add it to the list
+                          let obj = {
+                            meal: data[a].meal,
+                            carbs: data[a].carbs,
+                            mealid: result[i],
+                          }
+                          allMeals.push(obj);
                         }
-                        allMeals.push(obj);
                       }
-                    }
-                  });
+                    });
+                  }
                 }
-              }
-            }).then(() => {mealFilter = []}).then(() => { setshowSearchScreen(true);}) }}>
+              }).then(() => { mealFilter = [] }).then(() => { setshowSearchScreen(true); })
+            }}>
               <View style={styles.listItem}>
                 <Text fontWeight="medium">{"Search All Meals"}</Text>
                 <Ionicons
@@ -711,54 +707,24 @@ export default function App() {
         {showInsulinEditor && !showSearchScreen &&
           <ScrollView>
 
-              <View style={{ flexDirection: "row", justifyContent: "center", marginVertical: 20, width: "100%" }}>
-              <DatePicker
-                style={{
-                  width: Dimensions.get("window").width * 0.9,
-                }}
-                duration={30}
-                format="MM-DD-YYYY"
-                placeholder='Select Date'
-                date={date}
-                mode="date"
-                confirmBtnText="Confirm"
-                cancelBtnText="Cancel"
-                showIcon={false}
-                is24Hour={false}
-                display="default"
-                customStyles={{
-                  dateInput: {
-                    borderRadius: 8,
-                    width: "100%",
-                    marginVertical: 10
-                  },
-                  dateText: {
-                    color: isDarkmode ? themeColor.white : themeColor.dark,
-                    fontFamily: "Ubuntu_400Regular",
-                    fontSize: 18
-                  },
-                  datePickerCon: {
-                    display: "flex",
-                    flexDirection: "row",
-                    justifyContent: "center",
-                    alignItems: "center",
-                  },
-                  datePicker: {
-                    width: Dimensions.get("window").width,
-                    backgroundColor: isDarkmode ? "#262834" : themeColor.white,
-                    paddingHorizontal: Dimensions.get("window").width * 0.35
-                  }
+            <View style={{ marginHorizontal: 20, marginVertical: 20 }}>
+              <Button style={{ marginHorizontal: 20 }} text={(date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear()} status="primary" onPress={() => { if (show == true) { setShow(false) } else { setShow(true) } }} />
 
-                }}
-                onDateChange={(selectedDate) => {
-                  // Update the date
-                  date = new Date(Number(selectedDate.split("-")[2]), Number(selectedDate.split("-")[0])-1, Number(selectedDate.split("-")[1])) || date
-                  setShow(false);
-                  fetchMeals();
-                  forceUpdate();
-                }}
-              />
-              </View>
+              {show && (
+                <DateTimePicker
+                  value={date}
+                  mode="date"
+                  is24Hour={true}
+                  onChange={(evt, selectedDate) => {
+                    // Update the date
+                    date = selectedDate || date
+                    setShow(false);
+                    fetchMeals();
+                    forceUpdate();
+                  }}
+                />
+              )}
+            </View>
 
             <Button style={{ marginHorizontal: 20 }} text="All Meal Options" status="primary" onPress={() => { setShowInsulinEditor(false) }} />
 
@@ -791,23 +757,23 @@ export default function App() {
                             let meals = [];
 
                             if (mealDB) {
-                            for (let i = 0; i < Object.keys(mealDB).length; i++) {
-                              if (mealDB[String(i)].meal.includes(e)) {
-                                meals.push({ id: String(i + 2), title: mealDB[String(i)].meal });
+                              for (let i = 0; i < Object.keys(mealDB).length; i++) {
+                                if (mealDB[String(i)].meal.includes(e)) {
+                                  meals.push({ id: String(i + 2), title: mealDB[String(i)].meal });
+                                }
                               }
                             }
-                          }
 
                             let iterId = meals.length;
                             if (recipeDB) {
-                            for (let i = 0; i < recipeDB.length; i++) {
-                              if (recipeDB[i].name.includes(e)) {
-                                meals.push({ id: String(iterId + 2), title: recipeDB[i].name });
-                                iterId += 1;
+                              for (let i = 0; i < recipeDB.length; i++) {
+                                if (recipeDB[i].name.includes(e)) {
+                                  meals.push({ id: String(iterId + 2), title: recipeDB[i].name });
+                                  iterId += 1;
+                                }
                               }
                             }
-                            }
-  
+
                             setFilterList(meals);
                             forceUpdate()
                           },
@@ -860,7 +826,7 @@ export default function App() {
                                 fieldset[idx]['serving'] = "1"
 
                                 if (mealObj.carbs != Infinity) {
-                                fieldset[idx]['carbs'] = mealObj.carbs
+                                  fieldset[idx]['carbs'] = mealObj.carbs
                                 }
                                 fieldset[idx]['unit'] = mealObj.unit
                                 setFields(fieldset)
@@ -875,27 +841,27 @@ export default function App() {
                             }
                             // Make sure to update the database too
                             handleChange(idx, "meal", item.title);
-                            
+
                             let meals = [];
-                      
+
                             get("meals").then(function (result) {
                               for (let i = 0; i < Object.keys(result).length; i++) {
                                 meals.push({ id: String(i + 2), title: result[String(i)].meal });
                               }
-                      
+
                               get("recipes").then((result) => {
                                 let iterId = meals.length;
                                 for (let i = 0; i < result.length; i++) {
                                   meals.push({ id: String(iterId + 2), title: result[i].name });
                                   iterId += 1;
                                 }
-                      
+
                               })
-                      
+
                               setFilterList(meals);
-                          })
-                          
-                        }
+                            })
+
+                          }
                         }}
                       />
                     </React.Fragment>
