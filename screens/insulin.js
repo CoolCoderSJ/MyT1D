@@ -16,6 +16,8 @@ import {
 } from "react-native-rapi-ui";
 import { HStack } from 'react-native-stacks';
 import { Dimensions } from 'react-native';
+import axios from 'axios';
+
 
 // Initialize the database functions
 const set = async (key, value) => { try { await AsyncStorage.setItem(key, value) } catch (e) { console.log(e) } }
@@ -106,7 +108,6 @@ export default function App() {
                   let sugarValueList = [];
 
                   // Get the sugar value for the meal after the meal that the ingredient is in
-                  console.log(foods[b])
                   for (let j = 0; j < foods[b]['usedMeals'].length; j++) {
                     let usedMealId = foods[b]['usedMeals'][j];
                     let nextId = `${usedMealId.split(".")[0]}.${usedMealId.split(".")[1]}.${usedMealId.split(".")[2]}.${usedMealId.split(".")[3]}.${mealMap[usedMealId.split(".")[4]]}`;
@@ -188,7 +189,7 @@ export default function App() {
     forceUpdate()
   }
 
-  const calculateInsulin = () => {
+  const calculateInsulin = (preDefinedSugarVal) => {
     // Get the ingredients
     get(`meal.${date.getMonth() + 1}.${date.getDate()}.${date.getFullYear()}.${meal}`).then((values) => {
 
@@ -240,6 +241,11 @@ export default function App() {
 
         sugarValue = dexVal;
 
+        if (preDefinedSugarVal) {
+          sugarValue = preDefinedSugarVal;
+          console.log('predefined', preDefinedSugarVal, sugarValue)
+        }
+
         let threshold = null;
 
         // Set the threshold
@@ -255,9 +261,9 @@ export default function App() {
         foodUnits = String((totalCarb / specificItoCFactor).toFixed(2));
 
         // Check if correction is needed
-        if (dexVal > threshold) {
+        if (sugarValue > threshold) {
           // Calculate the correction factor and round to 2 places
-          correction = String(((dexVal - threshold) / specificISFFactor).toFixed(2));
+          correction = String(((sugarValue - threshold) / specificISFFactor).toFixed(2));
         }
         else {
           correction = '0';
@@ -266,8 +272,6 @@ export default function App() {
         // Calculate the total insulin
         totalUnits = String((Number(foodUnits) + Number(correction)).toFixed(2));
         unitsRounded = String(Math.round(Number(totalUnits)));
-
-        console.log(unitsRounded)
 
         // Show the user a message if there are no settings to use to calculate
         if (String(foodUnits) == "NaN") {
@@ -302,10 +306,7 @@ export default function App() {
 
   // When the method to specifically save the metadata is called
   const updateInsulinDB = () => {
-    // Get the current dexcom value
-    get("readings").then((result) => {
-      readings = result;
-      let dexVal = readings[0].value;
+
       // Calculate carbs
       totalCarb = 0;
       for (let i = 0; i < fields.length; i++) {
@@ -314,20 +315,20 @@ export default function App() {
         }
       };
 
-      lastSugarValue = dexVal;
+      lastSugarValue = sugarValue;
+
       forceUpdate();
 
       // Set the metadata to the database 
       setObj(`meal.${date.getMonth() + 1}.${date.getDate()}.${date.getFullYear()}.${meal}metadata`, {
-        dexVal: dexVal,
+        dexVal: sugarValue,
         totalCarb: totalCarb,
       })
       get("login").then(res => {if (res) {loginInfo = res; axios.post(`https://database.myt1d.repl.co/${loginInfo.username}/${loginInfo.password}/${`meal.${date.getMonth() + 1}.${date.getDate()}.${date.getFullYear()}.${meal}metadata`}`, {
-        dexVal: dexVal,
+        dexVal: sugarValue,
         totalCarb: totalCarb,
       })}});
 
-    })
   }
 
   // What happens when an ingredient is changed
@@ -984,33 +985,40 @@ export default function App() {
 
             <Section style={{ marginBottom: 20, marginHorizontal: 20 }}>
               <SectionContent>
-                <View>
-                  <Text fontSize="lg" style={{ textAlign: 'center' }}>
-                    Current Glucose Value: {sugarValue}
+                <View style={{marginBottom: 10}}>
+
+                  <Text fontSize="lg" style={{ textAlign: 'left', marginBottom: 5 }}>
+                    Current Glucose Value:
                   </Text>
+                  <TextInput
+                    placeholder="Current Glucose Value"
+                    keyboardType="numeric"
+                    onChangeText={e => {console.log("e", e); sugarValue = e; calculateInsulin(e)}}
+                    defaultValue={String(sugarValue)}
+                  />
                 </View>
-                <View>
-                  <Text fontSize="lg" style={{ textAlign: 'center' }}>
+                <View style={{marginBottom: 15}}>
+                  <Text fontSize="lg" style={{ textAlign: 'left' }}>
                     Last Recorded Glucose Value: {lastSugarValue}
                   </Text>
                 </View>
-                <View>
-                  <Text fontSize="lg" style={{ textAlign: 'center' }}>
+                <View style={{marginBottom: 15}}>
+                  <Text fontSize="lg" style={{ textAlign: 'left' }}>
                     Total Carbs: {totalCarb}
                   </Text>
                 </View>
-                <View>
-                  <Text fontSize="lg" style={{ textAlign: 'center' }} color={foodUnits == "Not Available" ? "#ff0000" : "#000000"}>
+                <View style={{marginBottom: 5}}>
+                  <Text fontSize="lg" style={{ textAlign: 'left' }} color={foodUnits == "Not Available" ? "#ff0000" : "#000000"}>
                     Food Units: {foodUnits}
                   </Text>
                 </View>
-                <View>
-                  <Text fontSize="lg" style={{ textAlign: 'center' }} color={correction == "Not Available" ? "#ff0000" : "#000000"}>
+                <View style={{marginBottom: 5}}>
+                  <Text fontSize="lg" style={{ textAlign: 'left' }} color={correction == "Not Available" ? "#ff0000" : "#000000"}>
                     Correction Units: {correction}
                   </Text>
                 </View>
-                <View>
-                  <Text fontSize="lg" style={{ textAlign: 'center' }} color={totalUnits == "Not Available" ? "#ff0000" : "#000000"}>
+                <View style={{marginBottom: 5}}>
+                  <Text fontSize="lg" style={{ textAlign: 'left' }} color={totalUnits == "Not Available" ? "#ff0000" : "#000000"}>
                     Total Units: {totalUnits}
                   </Text>
                 </View>

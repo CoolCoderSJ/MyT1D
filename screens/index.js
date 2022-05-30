@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import {
-  Layout, Text,
+  Layout, Text, Button,
   themeColor, TopNav, useTheme
 } from "react-native-rapi-ui";
 
@@ -33,26 +33,12 @@ setInterval(() => {
 
       loginInfo = res;
       
-      getAll().then(allKeys => {
-
-      for (let i=0; i<allKeys.length; i++) {
-
-        get(allKeys[i]).then(localItem => {
-          return localItem
-        }).then((localItem) => {
-        axios.get(`https://database.myt1d.repl.co/${loginInfo.username}/${loginInfo.password}/${allKeys[i]}`)
+      axios.get(`https://database.myt1d.repl.co/all/${loginInfo.username}/${loginInfo.password}`)
         .then(response => {
-          merged = Object.assign(localItem, response.data)
-          console.log("merged", merged, "\n\n")
-          axios.post(`https://database.myt1d.repl.co/${loginInfo.username}/${loginInfo.password}/${allKeys[i]}`, merged)
-          setObj(allKeys[i], merged)
+          for (let key in response.data) {
+            setObj(key, response.data[key])
+          }
         })
-        })
-
-    }
-
-    });
-
     }
   })
 }, 5000);
@@ -80,6 +66,7 @@ export default App = () => {
   });
 
   get("pens").then(pens => {
+    if (pens) {
     for (let i=0; i<pens.length; i++) {
       let alertedDays = pens[i].alertedDays || [];
       let startDate = new Date(pens[i].takenOut);
@@ -105,6 +92,7 @@ export default App = () => {
         }
       }
     }
+  }
   })
 
 
@@ -203,6 +191,9 @@ export default App = () => {
           <Text color={isDarkmode ? themeColor.white100 : themeColor.dark} size="h2">
             Loading
           </Text>
+
+          <Button style={{ marginHorizontal: 20, marginVertical: 10 }} text="Go Offline" status="primary" onPress={() => isLoading = false} />
+
         </View>
       }
 

@@ -11,6 +11,7 @@ import {
   Button, Layout, Section, SectionContent, TextInput,
   themeColor, TopNav, useTheme
 } from "react-native-rapi-ui";
+import axios from 'axios';
 
 
 
@@ -60,10 +61,15 @@ export default function App() {
 
   // What happens when an input changes
   function handleChange(i, type, value) {
+
+    console.log(i, type, value)
+
     // Update the state
     const values = [...fields];
     values[i][type] = value;
     setFields(values);
+
+    console.log("updated field")
 
     // Update the database
     get("meals").then(function (result) {
@@ -91,7 +97,9 @@ export default function App() {
       const values = [...fields];
       if (values[i]['meal'] && values[i]['meal'] != "") {
         setObj("meals", meals)
+        console.log(meals)
         get("login").then(res => {if (res) {loginInfo = res; axios.post(`https://database.myt1d.repl.co/${loginInfo.username}/${loginInfo.password}/meals`, meals)}});
+        console.log("all updated")
       }
     });
 
