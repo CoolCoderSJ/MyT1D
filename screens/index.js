@@ -23,6 +23,7 @@ const getAll = async () => { try { const keys = await AsyncStorage.getAllKeys();
 
 // Whether the app is loading or not, used to show and hide the loading spinner
 let isLoading = true;
+let data = {};
 
 setInterval(() => {
   let loginInfo = null;
@@ -41,13 +42,13 @@ setInterval(() => {
         })
     }
   })
+
 }, 5000);
 
 export default App = () => {
 
   const navigation = useNavigation();
   // Set the state of the app
-  const [data, setData] = React.useState({});
   const { isDarkmode, setTheme } = useTheme();
   const [, forceUpdate] = React.useReducer(x => x + 1, 0);
 
@@ -65,118 +66,120 @@ export default App = () => {
     },
   });
 
-  get("pens").then(pens => {
-    if (pens) {
-    for (let i=0; i<pens.length; i++) {
-      let alertedDays = pens[i].alertedDays || [];
-      let startDate = new Date(pens[i].takenOut);
-      let currentDate = new Date();
-      let diffTime = Math.abs(currentDate - startDate);
-      let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-      
-      if (diffDays >= 27) {
-        if (!alertedDays.includes(currentDate.toLocaleDateString()) && !pens[i].discarded) {
-          Alert.alert(
-            "Alert", 
-            `Your ${pens[i].type} pen with ${pens[i].amount} units left located at ${pens[i].location} has been out for ${diffDays} days. Your pen is about to expire soon.`,
-            [
-              { 
-                text: "OK"
-              }
-            ]
-          );
-
-          alertedDays.push(currentDate.toLocaleDateString());
-          pens[i].alertedDays = alertedDays;
-          setObj("pens", pens);
+  setInterval(() => {
+    get("pens").then(pens => {
+      if (pens) {
+      for (let i=0; i<pens.length; i++) {
+        let alertedDays = pens[i].alertedDays || [];
+        let startDate = new Date(pens[i].takenOut);
+        let currentDate = new Date();
+        let diffTime = Math.abs(currentDate - startDate);
+        let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+        
+        if (diffDays >= 27) {
+          if (!alertedDays.includes(currentDate.toLocaleDateString()) && !pens[i].discarded) {
+            Alert.alert(
+              "Alert", 
+              `Your ${pens[i].type} pen with ${pens[i].amount} units left located at ${pens[i].location} has been out for ${diffDays} days. Your pen is about to expire soon.`,
+              [
+                { 
+                  text: "OK"
+                }
+              ]
+            );
+  
+            alertedDays.push(currentDate.toLocaleDateString());
+            pens[i].alertedDays = alertedDays;
+            setObj("pens", pens);
+          }
         }
       }
     }
-  }
-  })
-
-
-  // Get the login information from the database
-  get("login")
-    .then(loginInfo => {
-
-      setData({
-        ...data,
-        username: loginInfo.username,
-        password: loginInfo.password
-      })
-
-      // If the app is in test mode
-      if (data.username == "testDemo" && data.password == "password") {
-
-        // Get a random number within a range
-        function getRandom(min, max) {
-          return Math.random() * (max - min) + min;
-        }
-
-        // Initialize a readings list and all possible trends
-        let readings = [];
-        let trends = ['DoubleUp', 'SingleUp', 'FortyFiveUp', 'Flat', 'FortyFiveDown', 'SingleDown', 'DoubleDown']
-
-        // Load 24 random glucose values
-        for (let i = 0; i < 24; i++) {
-          readings.push(
-            {
-              value: Math.round(getRandom(100, 150)),
-              trend: trends[Math.round(getRandom(0, 6))]
-            }
-          )
-        }
-
-        setObj("readings", readings)
-          .then(() => isLoading = false)
-
-      }
-
-      else {
-        // Get an account id from Dexcom
-        axios.post("https://share2.dexcom.com/ShareWebServices/Services/General/AuthenticatePublisherAccount", {
-          "accountName": data.username,
-          "password": data.password,
-          "applicationId": "d89443d2-327c-4a6f-89e5-496bbb0317db",
-        })
-          .then((response) => {
-            // Get a session ID from Dexcom
-            const account_id = response.data;
-            axios.post("https://share2.dexcom.com/ShareWebServices/Services/General/LoginPublisherAccountById", {
-              "accountId": account_id,
-              "password": data.password,
-              "applicationId": "d89443d2-327c-4a6f-89e5-496bbb0317db",
-            })
-              .then((response) => {
-                const session_id = response.data;
-                // Use the session ID to get the readings
-                axios.post(`https://share2.dexcom.com/ShareWebServices/Services/Publisher/ReadPublisherLatestGlucoseValues?sessionId=${session_id}&minutes=1440&maxCount=24`)
-                  .then((response) => {
-                    response = response.data;
-
-                    // Set the readings list to the database
-                    let readings = []
-                    for (let i = 0; i < response.length; i++) {
-                      readings.push({
-                        value: response[i].Value,
-                        trend: response[i].Trend
-                      })
-                    }
-
-                    setObj("readings", readings)
-
-                    // Finish loading
-                    isLoading = false;
-                  })
-                  .catch(error => console.error(error.response))
-              })
-              .catch(error => console.error(error.response))
-          })
-          .catch(error => console.error(error.response))
-
-      }
     })
+      
+  
+    // Get the login information from the database
+    get("login")
+      .then(loginInfo => {
+  
+        data = {
+          username: loginInfo.username,
+          password: loginInfo.password
+        }
+    
+        // If the app is in test mode
+        if (data.username == "testDemo" && data.password == "password") {
+  
+          // Get a random number within a range
+          function getRandom(min, max) {
+            return Math.random() * (max - min) + min;
+          }
+  
+          // Initialize a readings list and all possible trends
+          let readings = [];
+          let trends = ['DoubleUp', 'SingleUp', 'FortyFiveUp', 'Flat', 'FortyFiveDown', 'SingleDown', 'DoubleDown']
+  
+          // Load 24 random glucose values
+          for (let i = 0; i < 24; i++) {
+            readings.push(
+              {
+                value: Math.round(getRandom(100, 150)),
+                trend: trends[Math.round(getRandom(0, 6))]
+              }
+            )
+          }
+  
+          setObj("readings", readings)
+            .then(() => isLoading = false)
+  
+        }
+  
+        else {
+          // Get an account id from Dexcom
+          axios.post("https://share2.dexcom.com/ShareWebServices/Services/General/AuthenticatePublisherAccount", {
+            "accountName": data.username,
+            "password": data.password,
+            "applicationId": "d89443d2-327c-4a6f-89e5-496bbb0317db",
+          })
+            .then((response) => {
+              // Get a session ID from Dexcom
+              const account_id = response.data;
+              axios.post("https://share2.dexcom.com/ShareWebServices/Services/General/LoginPublisherAccountById", {
+                "accountId": account_id,
+                "password": data.password,
+                "applicationId": "d89443d2-327c-4a6f-89e5-496bbb0317db",
+              })
+                .then((response) => {
+                  const session_id = response.data;
+                  // Use the session ID to get the readings
+                  axios.post(`https://share2.dexcom.com/ShareWebServices/Services/Publisher/ReadPublisherLatestGlucoseValues?sessionId=${session_id}&minutes=1440&maxCount=24`)
+                    .then((response) => {
+                      response = response.data;
+                      
+                      // Set the readings list to the database
+                      let readings = []
+                      for (let i = 0; i < response.length; i++) {
+                        readings.push({
+                          value: response[i].Value,
+                          trend: response[i].Trend
+                        })
+                      }
+  
+                      setObj("readings", readings)
+  
+                      // Finish loading
+                      isLoading = false;
+                      forceUpdate()
+                    })
+                    .catch(error => console.error(error.response))
+                })
+                .catch(error => console.error(error.response))
+            })
+            .catch(error => console.error(error.response))
+  
+        }
+      })
+  }, 5000)
 
 
   return (
