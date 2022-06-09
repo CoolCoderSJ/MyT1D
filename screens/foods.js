@@ -26,6 +26,7 @@ const get = async (key) => { try { const value = await AsyncStorage.getItem(key)
 let filterAllowed = []
 
 export default function App() {
+  get("meals").then(meals => console.log(meals))
   // Initialize the state
   const [, forceUpdate] = React.useReducer(x => x + 1, 0);
   const navigation = useNavigation();
@@ -36,7 +37,14 @@ export default function App() {
   React.useEffect(() => {
     // Fetch the ingredients from a database
     get("meals").then(function (result) {
-      let meals = result;
+
+      let meals = [];
+      
+      for (let i=0;i<result.length;i++) {
+        if (result[i]) {
+          meals.push(result[i])
+        }
+      }
 
       if (!meals) {
         meals = {};
