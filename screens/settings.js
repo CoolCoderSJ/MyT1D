@@ -26,6 +26,7 @@ console.disableYellowBox = true;
 const Settings = () => {
   const { isDarkmode, setTheme } = useTheme();
   const navigation = useNavigation();
+  const [, forceUpdate] = React.useReducer(x => x + 1, 0);
 
   // Run once the app has loaded
   React.useEffect(() => {
@@ -33,6 +34,7 @@ const Settings = () => {
     get("factors")
       .then(factors => {
         savedSettings = factors
+        forceUpdate()
       })
       .catch(error => {
         savedSettings = {
