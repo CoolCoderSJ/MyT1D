@@ -1063,6 +1063,18 @@ export default function App() {
                   get("pens").then(result => {
                     let penData = result
                     let insulinPen = penData[insulinPenSelected];
+                    if ((insulinPen.amount - Number(unitsRounded) - Number(penData[insulinPenSelected].autoDiscard)) < 0) {
+                      Alert.alert(
+                        "Error", 
+                        "Insulin pen does not have enough insulin to take that amount!",
+                        [
+                          { 
+                            text: "OK"
+                          }
+                        ]
+                      )
+                      return;
+                    }
                     let history = insulinPen.history;
                     history.push({
                       date: date.toLocaleDateString() + " " + date.toLocaleTimeString(),
