@@ -38,13 +38,7 @@ export default function App() {
     // Fetch the ingredients from a database
     get("meals").then(function (result) {
 
-      let meals = [];
-      
-      for (let i=0;i<result.length;i++) {
-        if (result[i]) {
-          meals.push(result[i])
-        }
-      }
+      let meals = result;
 
       if (!meals) {
         meals = {};
